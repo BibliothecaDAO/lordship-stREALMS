@@ -7,3 +7,6 @@
 [submodule "lib/protocol-monorepo"]
 	path = lib/protocol-monorepo
 	url = https://github.com/superfluid-finance/protocol-monorepo
+[submodule "lib/ethereum-contracts"]
+	path = lib/ethereum-contracts
+	url = https://github.com/superfluid-finance/ethereum-contracts
