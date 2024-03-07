@@ -8,7 +8,14 @@ import "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721Votes
 import "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721Wrapper.sol";
 
 contract RealmsLordShip is ERC721, EIP712, ERC721Votes, ERC721Wrapper {
-    constructor() ERC721("MyToken", "MTK") EIP712("MyToken", "1") ERC721Wrapper("0x0") {}
+
+    // using SuperTokenV1Library for ISuperToken;
+
+    // ISuperToken private _superToken;
+
+    constructor(address superLords) ERC721("MyToken", "MTK") EIP712("MyToken", "1") ERC721Wrapper("0x0") {
+        // _superToken = ISuperToken(SuperLords);
+    }
 
     // The following functions are overrides required by Solidity.
 
@@ -25,5 +32,19 @@ contract RealmsLordShip is ERC721, EIP712, ERC721Votes, ERC721Wrapper {
         override(ERC721, ERC721Votes)
     {
         super._increaseBalance(account, value);
+    }
+
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)
+        public
+        virtual
+        override(ERC721Wrapper)
+        returns (bytes4)
+    {
+        // here we initalise a Lords Stream via superfluid
+        // each token increases flow rate
+        // on new token received, we increase flow rate
+
+        // when balance is decreased, we decrease flow rate
+        return super.onERC721Received(operator, from, tokenId, data);
     }
 }
