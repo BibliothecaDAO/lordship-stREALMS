@@ -25,10 +25,6 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
     event FlowRateUpdated(uint16 indexed id, uint256 rate);
     event RewardClaimed(address indexed recipient, uint256 amount);
 
-    error InvalidClaimer(address claimer);
-    error InvalidDelegatee(address delegatee);
-    error NoStream(address owner);
-    
     struct Flow {
         uint256 rate; // flow rate per second
         uint256 endAt;
