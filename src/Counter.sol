@@ -9,6 +9,18 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Votes.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Wrapper.sol";
 
+/// The goal of this contract is create a way to allow realm nft holders to get 
+/// streamed {x} amount of $lords once they wrap their realms token to obtain vRealms.
+/// Once they obtain vRealms, their votes are automatically self delegated and their stream starts counting.
+
+/// Streams are maintened on a per token basis. So this means that when making claims on streams, it would
+/// also need to be done one token at a time. The `claim` function however accepts an array of `tokenIds` so 
+/// you can make claims on multiple tokens at once
+///
+/// the Flow struct simply maintains the details of the current flow i.e the flow rate of lords (per second)
+/// as well as when that flow rate gets expired. A flow rate gets expired when a new one is added. 
+/// This means we can change the stream flow rate and when it is changed, everyone's current stream ends 
+/// and they only start using the new flow rate when they have claimed their current stream reward
 
 contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2Step {
 
@@ -16,6 +28,7 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
     event RewardClaimed(address indexed recipient, uint256 amount);
 
     error InvalidClaimer(address claimer);
+    error InvalidDelegatee(address delegatee);
     
     struct Flow {
         uint256 rate; // flow rate per second
@@ -81,6 +94,13 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         }
      }
 
+    function delegate(address delegatee) public override {
+        if (delegatee == address(0)){
+            revert InvalidDelegatee(delegatee);
+        }
+        super.delegate(delegatee);
+    }
+
 
     function _updateRewardTokenAddress(address _rewardTokenAddress) internal {
         rewardTokenAddress = _rewardTokenAddress;
@@ -132,7 +152,8 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
                 uint256 amountTime = endStreamAt - stream.lastClaimAt;
                 uint256 streamedAmount = _streamedAmount(amountTime, flow.rate);
 
-                stream.lastClaimAt = endStreamAt;
+                stream.lastClaimAt = block.timestamp;
+                stream.flowId = currentFlowId;
 
                 // interactions after effect
                 if (streamedAmount > 0) {
@@ -164,8 +185,14 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         returns (address)
     {
         address previousOwner = super._update(to, tokenId, auth);
-        _stream(previousOwner, to, tokenId);
 
+        if (to != address(0)) {
+            // self delegate if recipient has no delegate
+            if (delegates(to) == address(0)){
+                 _delegate(to, to);
+            }
+            _stream(previousOwner, to, tokenId);
+        }
         return previousOwner;
     }
 
