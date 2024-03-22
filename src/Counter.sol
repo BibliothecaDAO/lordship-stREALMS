@@ -10,12 +10,10 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Votes.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Wrapper.sol";
 
 /// The goal of this contract is create a way to allow realm nft holders to get 
-/// streamed {x} amount of $lords once they wrap their realms token to obtain vRealms.
-/// Once they obtain vRealms, their votes are automatically self delegated and their stream starts counting.
+/// streamed {x} amount of $lords once they wrap their realms token to obtain vRealms and 
+/// they delegate
 
-/// Streams are maintened on a per token basis. So this means that when making claims on streams, it would
-/// also need to be done one token at a time. The `claim` function however accepts an array of `tokenIds` so 
-/// you can make claims on multiple tokens at once
+/// Streams are maintained per address.
 ///
 /// the Flow struct simply maintains the details of the current flow i.e the flow rate of lords (per second)
 /// as well as when that flow rate gets expired. A flow rate gets expired when a new one is added. 
@@ -29,6 +27,7 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
 
     error InvalidClaimer(address claimer);
     error InvalidDelegatee(address delegatee);
+    error NoStream(address owner);
     
     struct Flow {
         uint256 rate; // flow rate per second
@@ -40,9 +39,9 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
 
     struct Stream {
         uint16 flowId;
-        uint256 lastClaimAt;
+        uint256 startAt;
     }
-    mapping(uint256 tokenId => Stream) public streams;
+    mapping(address owner => Stream) public streams;
 
 
     address public rewardTokenAddress;
@@ -60,7 +59,7 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         ERC721Wrapper(IERC721(_wrappedTokenAddress)) 
         Ownable(_ownerAddress)
     {
-        // set flow rate
+        // set flow rate   
         _startNewFlow(_flowRate);
 
         // update reward meta
@@ -82,24 +81,9 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         _updateRewardPayerAddress(newRewardPayerAddress);
      }
 
-    function claim(uint256[] calldata tokenIds) public {
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
-            uint256 tokenId = tokenIds[i];
-            address caller = _msgSender();
-            if (caller == _ownerOf(tokenId)) {
-                _claim(caller, tokenId);
-            } else {
-                revert InvalidClaimer(caller);
-            }
-        }
+    function claim() public {
+        _claimStream(msg.sender);
      }
-
-    function delegate(address delegatee) public override {
-        if (delegatee == address(0)){
-            revert InvalidDelegatee(delegatee);
-        }
-        super.delegate(delegatee);
-    }
 
 
     function _updateRewardTokenAddress(address _rewardTokenAddress) internal {
@@ -110,6 +94,20 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         rewardPayerAddress = _rewardPayerAddress;
     }
 
+
+
+    function _delegate(address account, address delegatee) internal override {
+        if (delegatee == address(0)){
+            // todo can account be 0?
+            _claimStream(account);
+            _endStream(account);
+        } else {
+            if (delegates(account) == address(0)) {
+                _resetStream(account);
+            }
+        }
+        super.delegate(delegatee);
+    }
 
     
     function _endCurrentFlow() internal {
@@ -128,55 +126,61 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
 
 
 
-    function _streamedAmount(uint256 amountTime, uint256 rate) 
+    function _claimStream(address owner) internal {
+        if (owner != address(0)) {
+            Stream storage stream = streams[owner];
+            if (stream.flowId != 0 && stream.startAt != 0) {
+                Flow storage flow = flows[stream.flowId];
+                uint256 endAt;
+                if (currentFlowId > stream.flowId) {
+                    endAt = flow.endAt;
+                } else {
+                    endAt = block.timestamp;
+                }
+
+                // todo ensure no vuln in next line that can stop protocol
+                uint256 streamDuration = endAt - stream.startAt;
+                uint256 streamedAmount 
+                    = _streamedAmount(balanceOf(owner), streamDuration, flow.rate);
+                
+                // send reward
+                if (streamedAmount > 0) {
+                    IERC20(rewardTokenAddress)
+                        .transferFrom(rewardPayerAddress, owner, streamedAmount);
+                    emit RewardClaimed(owner, streamedAmount);
+                }
+
+                // reset stream
+                _resetStream(owner);
+            }
+        }
+    }
+
+    function _resetStream(address owner) internal {
+        if (owner != address(0)) {
+            Stream storage stream = streams[owner];
+            stream.startAt = block.timestamp;
+            stream.flowId = currentFlowId;
+        }
+    }
+
+    function _endStream(address owner) internal {
+        if (owner != address(0)) {
+            Stream storage stream = streams[owner];
+            stream.startAt = 0;
+            stream.flowId = 0;
+        }
+    }
+
+
+    function _streamedAmount(uint256 tokenAmount, uint256 streamDuration, uint256 flowRate) 
         internal 
         pure 
         returns (uint256)
     {
-        return amountTime * rate;
+        return tokenAmount * streamDuration * flowRate;
      }
 
-     
-    function _claim(address recipient, uint256 tokenId) internal {
-        if (recipient != address(0)) {
-            Stream storage stream = streams[tokenId];
-            if (stream.flowId != 0) {
-                Flow storage flow = flows[stream.flowId];
-                uint256 endStreamAt;
-                if (block.timestamp >= flow.endAt) {
-                    endStreamAt = flow.endAt;
-                } else {
-                    endStreamAt = block.timestamp;
-                }
-
-                uint256 amountTime = endStreamAt - stream.lastClaimAt;
-                uint256 streamedAmount = _streamedAmount(amountTime, flow.rate);
-
-                stream.lastClaimAt = block.timestamp;
-                stream.flowId = currentFlowId;
-
-                // interactions after effect
-                if (streamedAmount > 0) {
-                    IERC20(rewardTokenAddress)
-                        .transferFrom(rewardPayerAddress, recipient, streamedAmount);
-                    emit RewardClaimed(recipient, streamedAmount);
-                }
-            }
-        }
-     }
-
-
-    function _stream(address oldOwner, address newOwner, uint256 tokenId) internal {
-        Stream storage stream = streams[tokenId];
-        if (stream.flowId != 0) {
-            _claim(oldOwner, tokenId);
-        }
-
-        if (newOwner != address(0)) {
-            stream.flowId = currentFlowId;
-            stream.lastClaimAt = block.timestamp;
-        }
-     }
 
 
     function _update(address to, uint256 tokenId, address auth)
@@ -184,15 +188,14 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         override(ERC721, ERC721Votes)
         returns (address)
     {
-        address previousOwner = super._update(to, tokenId, auth);
 
-        if (to != address(0)) {
-            // self delegate if recipient has no delegate
-            if (delegates(to) == address(0)){
-                 _delegate(to, to);
-            }
-            _stream(previousOwner, to, tokenId);
-        }
+        //todo check whether self transfer makes contract vulnerable
+
+        // claim stream everytime a token is transferred
+        _claimStream(_ownerOf(tokenId));
+        _claimStream(to);
+
+        address previousOwner = super._update(to, tokenId, auth);
         return previousOwner;
     }
 
