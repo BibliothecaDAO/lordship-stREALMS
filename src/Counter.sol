@@ -14,7 +14,11 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Wrapper.sol";
 /// they delegate
 
 /// Streams are maintained per address.
-///
+/// Whenever a vRealm is sent to any address and the recipient has unclaimed lords, 
+/// all unclaimed lords that have been accrued up until that point are automatically 
+/// transferred to the recipient and the stream is reset so that the recipient's new vrealms 
+/// balance is used for calculating reward 
+
 /// the Flow struct simply maintains the details of the current flow i.e the flow rate of lords (per second)
 /// as well as when that flow rate gets expired. A flow rate gets expired when a new one is added. 
 /// This means we can change the stream flow rate and when it is changed, everyone's current stream ends 
