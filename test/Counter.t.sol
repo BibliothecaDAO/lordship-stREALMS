@@ -519,10 +519,140 @@ contract RealmLordshipTest is Test {
             LORDS(LORDS_ADDRESS).balanceOf(staker) - balanceBeforeStake, 
             expectedRewardAmount
         );
-
-
-
     }
+
+
+    function test_Claim_StreamStopsRunningWhenDelegationStops() public {
+
+        // Scenerio: staker stops delegating after a while
+
+        address staker = address(0x4545454545);
+        uint256 numStakerRealms = 3;
+        uint256[] memory stakerRealmIds = new uint256[](numStakerRealms);
+        for (uint256 i = 0; i < numStakerRealms; i++) {
+            stakerRealmIds[i] = i;
+        }
+
+        _stake(staker, stakerRealmIds);
+
+
+        ////////////////////////////////////////////////
+        // staker stops delegating at the 12th second 
+        ////////////////////////////////////////////////
+        
+        uint256 startTs = 1;
+        uint256 stopDelegationTs = 12;
+        vm.warp(stopDelegationTs);
+
+        vm.prank(staker);
+        Votes(address(lordship))
+            .delegate(address(0));
+            
+        uint tsDiff = stopDelegationTs - startTs;
+        uint256 expectedRewardAmount =  tsDiff * flowRate * numStakerRealms;
+        // ensure correct amount of lords was given after delegation stopped
+        assertEq(
+            LORDS(LORDS_ADDRESS).balanceOf(staker), 
+            expectedRewardAmount
+        );
+
+        /////////////////////////////////////////////////////
+        // staker tries to claims reward at the 20th second 
+        //////////////////////////////////////////////////////
+        uint256 newTs = 20;
+        vm.warp(newTs);
+
+        // claim reward
+        vm.prank(staker);
+        lordship.claim();
+
+        // ensure staker gets no additional lords since delegation stopped
+        assertEq(
+            LORDS(LORDS_ADDRESS).balanceOf(staker), 
+            expectedRewardAmount // should be unchanged
+        );
+    }
+
+
+    function test_Claim_EnsureStreamStopsWhenFlowRateChanges() public {
+
+        // Scenerio: staker stakes 3 realms with original flow rate. then flow rate 
+        //          changes on the 12th second. Staker doesnt claim until the 20th second
+        //          but his reward should only be from timestamp 1 - 12. New reward should
+        //          start applying after claim (so the 20th second). we confirm this by making the
+        //          staker claim again at the 31st second (i.e after another 11 seconds)
+        uint256 originalFlowRate = flowRate;
+        address staker = address(0x4545454545);
+        uint256 numStakerRealms = 3;
+        uint256[] memory stakerRealmIds = new uint256[](numStakerRealms);
+        for (uint256 i = 0; i < numStakerRealms; i++) {
+            stakerRealmIds[i] = i;
+        }
+
+        _stake(staker, stakerRealmIds);
+
+
+        ////////////////////////////////////////////////
+        // flow rate changes at 12th second 
+        ////////////////////////////////////////////////
+        
+        uint256 startTs = 1;
+        uint256 flowRateChangeTs = 12;
+        vm.warp(flowRateChangeTs);
+
+        vm.prank(ownerAddress);
+        uint256 newFlowRate = originalFlowRate * 2; // twice the original flow rate
+        lordship.updateFlowRate(newFlowRate);
+
+
+ 
+        /////////////////////////////////////////////////////
+        // staker claims reward at the 20th second 
+        //////////////////////////////////////////////////////
+        uint256 newTs = 20;
+        vm.warp(newTs);
+
+        // claim reward
+        vm.prank(staker);
+        lordship.claim();
+
+
+        uint256 tsDiff = flowRateChangeTs - startTs;
+        uint256 expectedRewardAmount =  tsDiff * originalFlowRate * numStakerRealms;
+        uint256 balanceAfterFirstClaim = LORDS(LORDS_ADDRESS).balanceOf(staker);
+        // ensure staker only gets rewards up to 12th second
+        assertEq(
+            balanceAfterFirstClaim, 
+            expectedRewardAmount // should be unchanged
+        );
+
+         
+        /////////////////////////////////////////////////////
+        // staker claims reward at the 32th second where the new
+        // flow rate should apply
+        /////////////////////////////////////////////////////
+
+        startTs = 20;
+        newTs = 31;
+        vm.warp(newTs);
+
+        // claim reward
+        vm.prank(staker);
+        lordship.claim();
+
+
+        tsDiff = newTs - startTs;
+        uint256 newExpectedRewardAmount =  tsDiff * newFlowRate * numStakerRealms;
+        assertEq(newExpectedRewardAmount, expectedRewardAmount * 2);
+
+        // ensure staker only gets rewards from 20th second to 31st second
+        // using the new flow rate
+        assertEq(
+            LORDS(LORDS_ADDRESS).balanceOf(staker) - balanceAfterFirstClaim, 
+            newExpectedRewardAmount // should be unchanged
+        );
+    }
+
 
 
     function _stake(address _for, uint256[] memory stakerRealmIds) public {
