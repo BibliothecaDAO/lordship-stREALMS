@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-// import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Wrapper.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ERC721Wrapper} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Wrapper.sol";
 import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
-
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Test, console2} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {RealmLordship} from "../src/Counter.sol";
+import {RealmLordship} from "../src/RealmLordship.sol";
 import {LORDS} from "./Lords.sol";
 import {REALMS} from "./Realms.sol";
 
@@ -628,7 +625,7 @@ contract RealmLordshipTest is Test {
 
          
         /////////////////////////////////////////////////////
-        // staker claims reward at the 32th second where the new
+        // staker claims reward at the 31st second where the new
         // flow rate should apply
         /////////////////////////////////////////////////////
 

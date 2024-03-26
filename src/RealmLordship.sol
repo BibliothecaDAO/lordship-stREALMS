@@ -132,12 +132,12 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
     }
 
     function _startNewFlow(uint256 rate) internal {
-        currentFlowId++;
+        uint16 newFlowId = ++currentFlowId;
         Flow memory newFlow = Flow({rate: rate, endAt: type(uint256).max});
-        flows[currentFlowId] = newFlow;
+        flows[newFlowId] = newFlow;
 
         // emit event
-        emit FlowRateUpdated(currentFlowId, rate);
+        emit FlowRateUpdated(newFlowId, rate);
      }
 
 
@@ -154,7 +154,6 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
                     endAt = block.timestamp;
                 }
 
-                // todo ensure no vuln in next line that can stop protocol
                 uint256 streamDuration = endAt - stream.startAt;
                 uint256 streamedAmount 
                     = _streamedAmount(balanceOf(owner), streamDuration, flow.rate);
@@ -200,16 +199,13 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
      }
 
 
-
     function _update(address to, uint256 tokenId, address auth)
         internal
         override(ERC721, ERC721Votes)
         returns (address)
     {
 
-        //todo check whether self transfer makes contract vulnerable
-
-        // claim stream everytime a token is transferred
+        // claim stream for both sender and receiver
         _claimStream(_ownerOf(tokenId));
         _claimStream(to);
 
