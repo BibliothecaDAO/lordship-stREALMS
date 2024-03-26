@@ -27,7 +27,12 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Wrapper.sol";
 contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2Step {
 
     event FlowRateUpdated(uint16 indexed id, uint256 rate);
+    event RewardTokenUpdated(address indexed oldAddress, address newAddress);
+    event RewardPayerUpdated(address indexed oldAddress, address newAddress);
+
     event RewardClaimed(address indexed recipient, uint256 amount);
+
+    error NotImplemented();
 
     struct Flow {
         uint256 rate; // flow rate per second
@@ -41,7 +46,7 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         uint16 flowId;
         uint256 startAt;
     }
-    mapping(address owner => Stream) public streams;
+    mapping(address owner => Stream) private streams;
 
 
     address public rewardTokenAddress;
@@ -60,17 +65,15 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         Ownable(_ownerAddress)
     {
         // set flow rate   
-        _startNewFlow(_flowRate);
+        _updateFlowRate(_flowRate);
 
         // update reward meta
          _updateRewardTokenAddress(_rewardTokenAddress);
          _updateRewardPayerAddress(_rewardPayerAddress);
-
     }
 
     function updateFlowRate(uint256 rate) public onlyOwner {
-        _endCurrentFlow();
-        _startNewFlow(rate);
+        _updateFlowRate(rate);
      }
 
     function updateRewardTokenAddress(address newRewardTokenAddress) public onlyOwner {
@@ -81,16 +84,30 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
         _updateRewardPayerAddress(newRewardPayerAddress);
      }
 
+     function currentFlow() public view returns (Flow memory) {
+        return flows[currentFlowId];
+     }
+
+    function getStream(address owner) public view returns (Stream memory) {
+        return streams[owner];
+     }
+
     function claim() public {
         _claimStream(msg.sender);
      }
 
+    function _updateFlowRate(uint256 _flowRate) internal {
+        _endCurrentFlow();
+        _startNewFlow(_flowRate);
+    }
 
     function _updateRewardTokenAddress(address _rewardTokenAddress) internal {
+        emit RewardTokenUpdated(rewardTokenAddress, _rewardTokenAddress);
         rewardTokenAddress = _rewardTokenAddress;
     }
 
     function _updateRewardPayerAddress(address _rewardPayerAddress) internal {
+        emit RewardPayerUpdated(rewardPayerAddress, _rewardPayerAddress);
         rewardPayerAddress = _rewardPayerAddress;
     }
 
@@ -98,7 +115,6 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
 
     function _delegate(address account, address delegatee) internal override {
         if (delegatee == address(0)){
-            // todo can account be 0?
             _claimStream(account);
             _endStream(account);
         } else {
@@ -106,7 +122,7 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
                 _resetStream(account);
             }
         }
-        super.delegate(delegatee);
+        super._delegate(account, delegatee);
     }
 
     
@@ -125,7 +141,7 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
      }
 
 
-
+    /// must be calld before balance updates
     function _claimStream(address owner) internal {
         if (owner != address(0)) {
             Stream storage stream = streams[owner];
@@ -145,8 +161,10 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
                 
                 // send reward
                 if (streamedAmount > 0) {
-                    IERC20(rewardTokenAddress)
-                        .transferFrom(rewardPayerAddress, owner, streamedAmount);
+                    require(
+                        IERC20(rewardTokenAddress)
+                            .transferFrom(rewardPayerAddress, owner, streamedAmount)
+                    );
                     emit RewardClaimed(owner, streamedAmount);
                 }
 
@@ -200,11 +218,12 @@ contract RealmLordship is ERC721, EIP712, ERC721Votes, ERC721Wrapper, Ownable2St
     }
 
 
-    function _increaseBalance(address account, uint128 value)
+    function _increaseBalance(address, uint128)
         internal
+        pure
         override(ERC721, ERC721Votes)
     {
-        super._increaseBalance(account, value);
+        revert NotImplemented();
     }
 
 }
