@@ -1,9 +1,9 @@
+mod strealm;
 mod deps {
     mod erc721 {
         mod extensions;
     }
 }
-mod strealm;
 
 
 /// The goal of this contract is create a way to allow realm nft holders to get 
@@ -26,22 +26,22 @@ const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 
 #[starknet::contract]
 mod LORDSHIP {
-    use openzeppelin::governance::utils::interfaces::votes::IVotes;
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
-    use openzeppelin::upgrades::UpgradeableComponent;
-    use openzeppelin::upgrades::interface::IUpgradeable;
+    use openzeppelin::governance::utils::interfaces::votes::IVotes;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::{ERC721Component};
-    use strealm::deps::erc721::extensions::ERC721VotesComponent::InternalTrait as ERC721VotesInternalTrait;
-    use strealm::deps::erc721::extensions::ERC721VotesComponent;
+    use openzeppelin::upgrades::UpgradeableComponent;
+    use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::utils::cryptography::nonces::NoncesComponent;
     use openzeppelin::utils::cryptography::snip12::SNIP12Metadata;
 
-    use strealm::strealm::StRealmComponent;
+    use starknet::{ContractAddress, ClassHash};
+    use strealm::deps::erc721::extensions::ERC721VotesComponent::InternalTrait as ERC721VotesInternalTrait;
+    use strealm::deps::erc721::extensions::ERC721VotesComponent;
     use strealm::strealm::StRealmComponent::InternalTrait as StRealmInternalTrait;
 
-    use starknet::{ContractAddress, ClassHash};
+    use strealm::strealm::StRealmComponent;
     use super::{MINTER_ROLE, UPGRADER_ROLE};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);

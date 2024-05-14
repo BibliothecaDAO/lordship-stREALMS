@@ -1,7 +1,6 @@
+use StRealmComponent::{Flow, Stream};
 use openzeppelin::token::erc721::interface::{IERC721Dispatcher};
 use starknet::ContractAddress;
-
-use StRealmComponent::{Flow, Stream};
 #[starknet::interface]
 trait IStRealm<TState> {
     fn get_stream(self: @TState, owner: ContractAddress) -> Stream;
@@ -16,23 +15,21 @@ trait IStRealm<TState> {
 
 #[starknet::component]
 mod StRealmComponent {
-    use openzeppelin::token::erc721::ERC721Component;
+    use core::integer::BoundedInt;
+    use openzeppelin::access::accesscontrol::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
+    use openzeppelin::access::accesscontrol::AccessControlComponent;
+    use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
+    use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
+    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
     use openzeppelin::token::erc721::ERC721Component::InternalTrait as ERC721InternalTraits;
+    use openzeppelin::token::erc721::ERC721Component;
+    use openzeppelin::token::erc721::interface::IERC721_RECEIVER_ID;
     use openzeppelin::token::erc721::interface::{
         IERC721, IERC721Dispatcher, IERC721DispatcherTrait
     };
-    use openzeppelin::token::erc721::interface::IERC721_RECEIVER_ID;
     use starknet::{ContractAddress};
-    use openzeppelin::introspection::src5::SRC5Component;
-    use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
-    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-    use openzeppelin::access::accesscontrol::AccessControlComponent;
-    use openzeppelin::access::accesscontrol::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
-    use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
-
-
-    use core::integer::BoundedInt;
 
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Flow {

@@ -6,3 +6,9 @@ version = "0.1.0"
 
 [dependencies]
 openzeppelin = { git = "https://github.com/ericnordelo/cairo-contracts", rev = "fe8ba03" }
+
+
+[[target.starknet-contract]]
+
+[tool.fmt]
+sort-module-level-items = true

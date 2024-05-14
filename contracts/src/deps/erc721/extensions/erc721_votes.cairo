@@ -15,14 +15,14 @@ use starknet::ContractAddress;
 mod ERC721VotesComponent {
     use openzeppelin::account::dual_account::{DualCaseAccount, DualCaseAccountABI};
     use openzeppelin::governance::utils::interfaces::IVotes;
-    use openzeppelin::token::erc721::ERC721Component;
+    use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
+    use openzeppelin::token::erc721::ERC721Component;
     use openzeppelin::token::erc721::interface::IERC721;
     use openzeppelin::utils::nonces::NoncesComponent::InternalTrait as NoncesInternalTrait;
     use openzeppelin::utils::nonces::NoncesComponent;
     use openzeppelin::utils::structs::checkpoint::{Checkpoint, Trace, TraceTrait};
     use starknet::ContractAddress;
-    use openzeppelin::introspection::src5::SRC5Component;
     use super::{Delegation, OffchainMessageHash, SNIP12Metadata};
 
     #[storage]
