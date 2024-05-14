@@ -23,7 +23,7 @@ mod StRealmComponent {
         IERC721, IERC721Dispatcher, IERC721DispatcherTrait
     };
     use openzeppelin::token::erc721::interface::IERC721_RECEIVER_ID;
-    use starknet::{ContractAddress, get_caller_address, get_contract_address};
+    use starknet::{ContractAddress};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
@@ -239,18 +239,16 @@ mod StRealmComponent {
 
 
         fn _reset_stream(ref self: ComponentState<TContractState>, owner: ContractAddress) {
-            let mut stream: Stream = self.StRealm_streams.read(owner);
-            stream.start_at = starknet::get_block_timestamp();
-            stream.flow_id = self.StRealm_latest_flow_id.read();
+            let stream = Stream {
+                start_at: starknet::get_block_timestamp(),
+                flow_id: self.StRealm_latest_flow_id.read()
+            };
             self.StRealm_streams.write(owner, stream);
         }
 
         fn _end_stream(ref self: ComponentState<TContractState>, owner: ContractAddress) {
             if owner.is_non_zero() {
-                let mut stream: Stream = self.StRealm_streams.read(owner);
-                stream.start_at = 0;
-                stream.flow_id = 0;
-                self.StRealm_streams.write(owner, stream);
+                self.StRealm_streams.write(owner, Stream {flow_id: 0, start_at: 0});
             }
         }
 
@@ -265,7 +263,7 @@ mod StRealmComponent {
         }
 
 
-        /// must be calld before balance updates
+        /// must be called before balance updates
         fn _claim_stream(ref self: ComponentState<TContractState>, owner: ContractAddress) {
             if owner.is_non_zero() {
                 let stream: Stream = self.StRealm_streams.read(owner);
@@ -273,10 +271,12 @@ mod StRealmComponent {
                     let flow: Flow = self.StRealm_flows.read(stream.flow_id);
                     let latest_flow_id: u32 = self.StRealm_latest_flow_id.read();
 
-                    let mut stream_end_at: u64 = starknet::get_block_timestamp();
-                    if latest_flow_id > stream.flow_id {
-                        stream_end_at = flow.end_at;
-                    }
+                    let stream_end_at = if latest_flow_id > stream.flow_id {
+                        flow.end_at
+                    } else {
+                        starknet::get_block_timestamp()
+                    };
+
 
                     let stream_duration = stream_end_at - stream.start_at;
                     let erc721_component = get_dep_component!(@self, ERC721);
