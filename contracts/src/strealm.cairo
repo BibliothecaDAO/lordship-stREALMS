@@ -63,14 +63,14 @@ mod StRealmComponent {
     #[event]
     #[derive(Drop, PartialEq, starknet::Event)]
     enum Event {
-        FlowRateUpdated: FlowRateUpdated,
+        FlowRateChanged: FlowRateChanged,
         RewardTokenUpdated: RewardTokenUpdated,
         RewardPayerUpdated: RewardPayerUpdated,
         RewardClaimed: RewardClaimed
     }
 
     #[derive(Drop, PartialEq, starknet::Event)]
-    struct FlowRateUpdated {
+    struct FlowRateChanged {
         #[key]
         id: u32,
         rate: u256
@@ -227,6 +227,14 @@ mod StRealmComponent {
             let new_flow_id = self.StRealm_latest_flow_id.read() + 1;
             let new_flow: Flow = Flow { rate: new_flow_rate, end_at: BoundedInt::max() };
             self.StRealm_flows.write(new_flow_id, new_flow);
+
+            self
+                .emit(
+                    FlowRateChanged {
+                        id: new_flow_id,
+                        rate: new_flow.rate
+                    }
+                );
         }
 
 
