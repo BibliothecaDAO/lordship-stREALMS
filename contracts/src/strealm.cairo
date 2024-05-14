@@ -26,8 +26,9 @@ mod StRealmComponent {
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-    use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::access::ownable::OwnableComponent::InternalTrait as OwnableInternalTrait;
+    use openzeppelin::access::accesscontrol::AccessControlComponent;
+    use openzeppelin::access::accesscontrol::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
+    use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
 
 
     use core::integer::BoundedInt;
@@ -101,7 +102,7 @@ mod StRealmComponent {
         TContractState,
         +HasComponent<TContractState>,
         impl ERC721: ERC721Component::HasComponent<TContractState>,
-        impl Ownable: OwnableComponent::HasComponent<TContractState>,
+        impl AccessControl: AccessControlComponent::HasComponent<TContractState>,
         +ERC721Component::ERC721HooksTrait<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
         +Drop<TContractState>
@@ -126,8 +127,8 @@ mod StRealmComponent {
         }
 
         fn update_flow_rate(ref self: ComponentState<TContractState>, new_rate: u256) {
-            let ownable_component = get_dep_component!(@self, Ownable);
-            ownable_component.assert_only_owner();
+            let accesscontrol_component = get_dep_component!(@self, AccessControl);
+            accesscontrol_component.assert_only_role(DEFAULT_ADMIN_ROLE);
 
             self._update_flow_rate(new_rate);
         }
@@ -135,8 +136,8 @@ mod StRealmComponent {
         fn update_reward_token(
             ref self: ComponentState<TContractState>, new_token_address: ContractAddress
         ) {
-            let ownable_component = get_dep_component!(@self, Ownable);
-            ownable_component.assert_only_owner();
+            let accesscontrol_component = get_dep_component!(@self, AccessControl);
+            accesscontrol_component.assert_only_role(DEFAULT_ADMIN_ROLE);
 
             self._update_reward_token(new_token_address);
         }
@@ -144,8 +145,8 @@ mod StRealmComponent {
         fn update_reward_payer(
             ref self: ComponentState<TContractState>, new_payer_address: ContractAddress
         ) {
-            let ownable_component = get_dep_component!(@self, Ownable);
-            ownable_component.assert_only_owner();
+            let accesscontrol_component = get_dep_component!(@self, AccessControl);
+            accesscontrol_component.assert_only_role(DEFAULT_ADMIN_ROLE);
 
             self._update_reward_payer(new_payer_address);
         }
