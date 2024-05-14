@@ -65,6 +65,29 @@ mod ERC721VotesComponent {
         const EXPIRED_SIGNATURE: felt252 = 'Votes: expired signature';
         const INVALID_SIGNATURE: felt252 = 'Votes: invalid signature';
     }
+
+    //
+    // Hooks
+    //
+
+    trait ERC721VotesHooksTrait<TContractState> {
+        fn before_delegate(
+            ref self: ComponentState<TContractState>,
+            account: ContractAddress,
+            delegatee: ContractAddress
+        );
+
+
+        fn after_delegate(
+            ref self: ComponentState<TContractState>,
+            account: ContractAddress,
+            delegatee: ContractAddress
+        );
+    }
+
+    //
+    // External
+    //
  
     #[embeddable_as(ERC721VotesImpl)]
     impl ERC721Votes<
@@ -72,6 +95,7 @@ mod ERC721VotesComponent {
         +HasComponent<TContractState>,
         +ERC721Component::HasComponent<TContractState>,
         +ERC721Component::ERC721HooksTrait<TContractState>,
+        +ERC721VotesHooksTrait<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
         impl Nonces: NoncesComponent::HasComponent<TContractState>,
         +SNIP12Metadata,
@@ -182,6 +206,7 @@ mod ERC721VotesComponent {
         impl ERC721: ERC721Component::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
         +ERC721Component::ERC721HooksTrait<TContractState>,
+        impl Hooks: ERC721VotesHooksTrait<TContractState>,
         +NoncesComponent::HasComponent<TContractState>,
         +SNIP12Metadata,
         +Drop<TContractState>,
@@ -200,6 +225,8 @@ mod ERC721VotesComponent {
             account: ContractAddress,
             delegatee: ContractAddress
         ) {
+            Hooks::before_delegate(ref self, account, delegatee);
+
             let from_delegate = self.delegates(account);
             self.ERC721Votes_delegatee.write(account, delegatee);
 
@@ -208,6 +235,8 @@ mod ERC721VotesComponent {
                     DelegateChanged { delegator: account, from_delegate, to_delegate: delegatee }
                 );
             self.move_delegate_votes(from_delegate, delegatee, self.get_voting_units(account));
+
+            Hooks::after_delegate(ref self, account, delegatee);
         }
 
         /// Moves delegated votes from one delegate to another.
@@ -271,6 +300,24 @@ mod ERC721VotesComponent {
         }
     }
 }
+
+/// An empty implementation of the ERC721Votes hooks to be used in basic ERC721Votes preset contracts.
+impl ERC721VotesHooksEmptyImpl<TContractState> of ERC721VotesComponent::ERC721VotesHooksTrait<TContractState> {
+    fn before_delegate(
+        ref self:  ERC721VotesComponent::ComponentState<TContractState>,
+        account: ContractAddress,
+        delegatee: ContractAddress
+    ){}
+
+
+    fn after_delegate(
+        ref self:  ERC721VotesComponent::ComponentState<TContractState>,
+        account: ContractAddress,
+        delegatee: ContractAddress
+    ){}
+}
+
+   
 
 //
 // Offchain message hash generation helpers.
