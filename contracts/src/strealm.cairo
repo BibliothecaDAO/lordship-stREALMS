@@ -51,7 +51,7 @@ mod StRealmComponent {
         StRealm_streams: LegacyMap<ContractAddress, Stream>,
         StRealm_flows: LegacyMap<u32, Flow>,
         StRealm_latest_flow_id: u32,
-        StRealm_staker_reward_balance: u256
+        StRealm_staker_reward_balance: LegacyMap<ContractAddress, u256>
     }
 
 
@@ -251,7 +251,7 @@ mod StRealmComponent {
 
         fn _reward_balance(self: @ComponentState<TContractState>, owner: ContractAddress) -> u256 {
             if owner.is_non_zero() {
-                let staker_reward_balance = self.StRealm_staker_reward_balance.read();
+                let staker_reward_balance = self.StRealm_staker_reward_balance.read(owner);
                 let stream: Stream = self.StRealm_streams.read(owner);
                 if stream.flow_id.is_non_zero() && stream.start_at.is_non_zero() {
                     let flow: Flow = self.StRealm_flows.read(stream.flow_id);
@@ -286,7 +286,7 @@ mod StRealmComponent {
             if owner.is_non_zero() {
                 let new_reward_balance = self._reward_balance(owner);
                 if new_reward_balance.is_non_zero() {
-                    self.StRealm_staker_reward_balance.write(new_reward_balance);
+                    self.StRealm_staker_reward_balance.write(owner, new_reward_balance);
                 }
                 // reset stream
                 self._reset_stream(owner);
@@ -296,17 +296,17 @@ mod StRealmComponent {
 
         fn _reward_claim(ref self: ComponentState<TContractState>, owner: ContractAddress) {
             // update balance
-            let balance = self.StRealm_staker_reward_balance.read();
-            self.StRealm_staker_reward_balance.write(0);
-            assert(balance.is_non_zero(), Errors::FAILED_TRANSFER);
+            let owner_reward_balance = self.StRealm_staker_reward_balance.read(owner);
+            self.StRealm_staker_reward_balance.write(owner, 0);
+            assert(owner_reward_balance.is_non_zero(), Errors::FAILED_TRANSFER);
 
             // send reward
             assert(
                 IERC20Dispatcher { contract_address: self.StRealm_reward_token.read() }
-                    .transfer_from(self.StRealm_reward_payer.read(), owner, balance),
+                    .transfer_from(self.StRealm_reward_payer.read(), owner, owner_reward_balance),
                 Errors::FAILED_TRANSFER
             );
-            self.emit(RewardClaimed { recipient: owner, amount: balance });
+            self.emit(RewardClaimed { recipient: owner, amount: owner_reward_balance });
         }
     }
 }
