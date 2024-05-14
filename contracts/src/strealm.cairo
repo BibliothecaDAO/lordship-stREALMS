@@ -6,8 +6,9 @@ trait IStRealm<TState> {
     fn get_stream(self: @TState, owner: ContractAddress) -> Stream;
     fn get_flow(self: @TState, flow_id: u32) -> Flow;
     fn get_latest_flow_id(self: @TState) -> u32;
+    fn get_reward_balance(self: @TState) -> u256;
 
-    fn claim(ref self: TState);
+    fn reward_claim(ref self: TState);
     fn update_flow_rate(ref self: TState, new_rate: u256);
     fn update_reward_token(ref self: TState, new_token_address: ContractAddress);
     fn update_reward_payer(ref self: TState, new_payer_address: ContractAddress);
@@ -49,7 +50,8 @@ mod StRealmComponent {
         StRealm_reward_payer: ContractAddress,
         StRealm_streams: LegacyMap<ContractAddress, Stream>,
         StRealm_flows: LegacyMap<u32, Flow>,
-        StRealm_latest_flow_id: u32
+        StRealm_latest_flow_id: u32,
+        StRealm_staker_reward_balance: u256
     }
 
 
@@ -120,12 +122,16 @@ mod StRealmComponent {
             self.StRealm_latest_flow_id.read()
         }
 
+        fn get_reward_balance(self: @ComponentState<TContractState>) -> u256 {
+            self._reward_balance(starknet::get_caller_address())
+        }
+
 
         //
         // Mutables
         //
-        fn claim(ref self: ComponentState<TContractState>) {
-            self._claim_stream(starknet::get_caller_address())
+        fn reward_claim(ref self: ComponentState<TContractState>) {
+            self._reward_claim(starknet::get_caller_address())
         }
 
         fn update_flow_rate(ref self: ComponentState<TContractState>, new_rate: u256) {
@@ -243,20 +249,9 @@ mod StRealmComponent {
             }
         }
 
-
-        fn _streamed_amount(
-            ref self: ComponentState<TContractState>,
-            token_amount: u256,
-            stream_duration: u64,
-            flow_rate: u256
-        ) -> u256 {
-            token_amount * stream_duration.into() * flow_rate
-        }
-
-
-        /// must be called before balance updates
-        fn _claim_stream(ref self: ComponentState<TContractState>, owner: ContractAddress) {
+        fn _reward_balance(self: @ComponentState<TContractState>, owner: ContractAddress) -> u256 {
             if owner.is_non_zero() {
+                let staker_reward_balance = self.StRealm_staker_reward_balance.read();
                 let stream: Stream = self.StRealm_streams.read(owner);
                 if stream.flow_id.is_non_zero() && stream.start_at.is_non_zero() {
                     let flow: Flow = self.StRealm_flows.read(stream.flow_id);
@@ -269,29 +264,49 @@ mod StRealmComponent {
                     };
 
                     let stream_duration = stream_end_at - stream.start_at;
-                    let erc721_component = get_dep_component!(@self, ERC721);
+                    let erc721_component = get_dep_component!(self, ERC721);
 
-                    let streamed_amount = self
-                        ._streamed_amount(
-                            erc721_component.balance_of(owner), stream_duration, flow.rate
-                        );
+                    let num_staked_realms = erc721_component.balance_of(owner);
+                    let streamed_amount = num_staked_realms * stream_duration.into() * flow.rate;
 
-                    // send reward
-                    if streamed_amount.is_non_zero() {
-                        assert(
-                            IERC20Dispatcher { contract_address: self.StRealm_reward_token.read() }
-                                .transfer_from(
-                                    self.StRealm_reward_payer.read(), owner, streamed_amount
-                                ),
-                            Errors::FAILED_TRANSFER
-                        );
-                        self.emit(RewardClaimed { recipient: owner, amount: streamed_amount });
-                    }
-
-                    // reset stream
-                    self._reset_stream(owner);
+                    return staker_reward_balance + streamed_amount;
+                } else {
+                    staker_reward_balance
                 }
+            } else {
+                0_u256
             }
+        }
+
+
+        /// must be called before balance updates
+        fn _update_stream_balance(
+            ref self: ComponentState<TContractState>, owner: ContractAddress
+        ) {
+            if owner.is_non_zero() {
+                let new_reward_balance = self._reward_balance(owner);
+                if new_reward_balance.is_non_zero() {
+                    self.StRealm_staker_reward_balance.write(new_reward_balance);
+                }
+                // reset stream
+                self._reset_stream(owner);
+            }
+        }
+
+
+        fn _reward_claim(ref self: ComponentState<TContractState>, owner: ContractAddress) {
+            // update balance
+            let balance = self.StRealm_staker_reward_balance.read();
+            self.StRealm_staker_reward_balance.write(0);
+            assert(balance.is_non_zero(), Errors::FAILED_TRANSFER);
+
+            // send reward
+            assert(
+                IERC20Dispatcher { contract_address: self.StRealm_reward_token.read() }
+                    .transfer_from(self.StRealm_reward_payer.read(), owner, balance),
+                Errors::FAILED_TRANSFER
+            );
+            self.emit(RewardClaimed { recipient: owner, amount: balance });
         }
     }
 }

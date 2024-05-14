@@ -153,8 +153,8 @@ mod LORDSHIP {
 
             // claim stream for both sender and receiver
             let mut strealm_component = get_dep_component_mut!(ref self, StRealm);
-            strealm_component._claim_stream(owner_before_transfer);
-            strealm_component._claim_stream(owner_after_transfer);
+            strealm_component._update_stream_balance(owner_before_transfer);
+            strealm_component._update_stream_balance(owner_after_transfer);
 
             // transfer voting units 
             let mut erc721_votes_component = get_dep_component_mut!(ref self, ERC721Votes);
@@ -190,7 +190,7 @@ mod LORDSHIP {
         ) {
             let mut strealm_component = get_dep_component_mut!(ref self, StRealm);
             if delegatee.is_zero() {
-                strealm_component._claim_stream(account);
+                strealm_component._update_stream_balance(account);
                 strealm_component._end_stream(account);
             } else {
                 if self.delegates(account).is_zero() {
