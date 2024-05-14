@@ -22,12 +22,15 @@ mod strealm;
 /// and they only start using the new flow rate when they have claimed their current stream reward
 
 const MINTER_ROLE: felt252 = selector!("MINTER_ROLE");
+const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 
 #[starknet::contract]
 mod LORDSHIP {
     use openzeppelin::governance::utils::interfaces::votes::IVotes;
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
+    use openzeppelin::upgrades::UpgradeableComponent;
+    use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::{ERC721Component};
     use strealm::deps::erc721::extensions::ERC721VotesComponent::InternalTrait as ERC721VotesInternalTrait;
@@ -38,12 +41,13 @@ mod LORDSHIP {
     use strealm::strealm::StRealmComponent;
     use strealm::strealm::StRealmComponent::InternalTrait as StRealmInternalTrait;
 
-    use starknet::ContractAddress;
-    use super::MINTER_ROLE;
+    use starknet::{ContractAddress, ClassHash};
+    use super::{MINTER_ROLE, UPGRADER_ROLE};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
     component!(path: ERC721VotesComponent, storage: erc721_votes, event: ERC721VotesEvent);
     component!(path: NoncesComponent, storage: nonces, event: NoncesEvent);
@@ -67,11 +71,13 @@ mod LORDSHIP {
     impl StRealmComponentImpl = StRealmComponent::StRealmImpl<ContractState>;
 
     #[abi(embed_v0)]
-    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
 
 
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
     impl StRealmInternalImpl = StRealmComponent::InternalImpl<ContractState>;
 
     #[storage]
@@ -84,6 +90,8 @@ mod LORDSHIP {
         src5: SRC5Component::Storage,
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
         #[substorage(v0)]
         nonces: NoncesComponent::Storage,
         #[substorage(v0)]
@@ -101,6 +109,8 @@ mod LORDSHIP {
         SRC5Event: SRC5Component::Event,
         #[flat]
         AccessControlEvent: AccessControlComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
         #[flat]
         NoncesEvent: NoncesComponent::Event,
         #[flat]
@@ -198,6 +208,15 @@ mod LORDSHIP {
     }
 
 
+    #[abi(embed_v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            self.access_control.assert_only_role(UPGRADER_ROLE);
+            self.upgradeable._upgrade(new_class_hash);
+        }
+    }
+
+
     #[generate_trait]
     #[abi(per_item)]
     impl ERC721MinterImpl of ERC721MinterTrait {
@@ -218,6 +237,7 @@ mod LORDSHIP {
         ref self: ContractState,
         default_admin: ContractAddress,
         minter: ContractAddress,
+        upgrader: ContractAddress,
         underlying: ContractAddress,
         flow_rate: u256,
         reward_token: ContractAddress,
@@ -229,5 +249,6 @@ mod LORDSHIP {
         self.access_control.initializer();
         self.access_control._grant_role(DEFAULT_ADMIN_ROLE, default_admin);
         self.access_control._grant_role(MINTER_ROLE, minter);
+        self.access_control._grant_role(UPGRADER_ROLE, upgrader);
     }
 }
