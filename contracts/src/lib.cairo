@@ -243,7 +243,7 @@ mod LORDSHIP {
         reward_token: ContractAddress,
         reward_payer: ContractAddress
     ) {
-        self.erc721.initializer("stRealm", "stREALM", "");
+        self.erc721.initializer("Staked Realm", "stREALM", "");
         self.strealm.initializer(:flow_rate, :reward_token, :reward_payer);
 
         self.access_control.initializer();
