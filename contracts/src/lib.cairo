@@ -148,17 +148,17 @@ mod LORDSHIP {
             token_id: u256,
             auth: ContractAddress
         ) {
-            let ownerBeforeTransfer: ContractAddress = self.owner_of(token_id);
-            let ownerAfterTransfer: ContractAddress = to;
+            let owner_before_transfer: ContractAddress = self.owner_of(token_id);
+            let owner_after_transfer: ContractAddress = to;
 
             // claim stream for both sender and receiver
             let mut strealm_component = get_dep_component_mut!(ref self, StRealm);
-            strealm_component._claim_stream(ownerBeforeTransfer);
-            strealm_component._claim_stream(ownerAfterTransfer);
+            strealm_component._claim_stream(owner_before_transfer);
+            strealm_component._claim_stream(owner_after_transfer);
 
             // transfer voting units 
             let mut erc721_votes_component = get_dep_component_mut!(ref self, ERC721Votes);
-            erc721_votes_component.transfer_voting_units(ownerBeforeTransfer, to, 1);
+            erc721_votes_component.transfer_voting_units(owner_before_transfer, to, 1);
         }
 
         fn after_update(
