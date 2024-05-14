@@ -1,4 +1,3 @@
-
 use core::hash::HashStateExTrait;
 use hash::{HashStateTrait, Hash};
 use openzeppelin::utils::cryptography::snip12::{OffchainMessageHash, StructHash, SNIP12Metadata};
@@ -88,7 +87,7 @@ mod ERC721VotesComponent {
     //
     // External
     //
- 
+
     #[embeddable_as(ERC721VotesImpl)]
     impl ERC721Votes<
         TContractState,
@@ -302,22 +301,23 @@ mod ERC721VotesComponent {
 }
 
 /// An empty implementation of the ERC721Votes hooks to be used in basic ERC721Votes preset contracts.
-impl ERC721VotesHooksEmptyImpl<TContractState> of ERC721VotesComponent::ERC721VotesHooksTrait<TContractState> {
+impl ERC721VotesHooksEmptyImpl<
+    TContractState
+> of ERC721VotesComponent::ERC721VotesHooksTrait<TContractState> {
     fn before_delegate(
-        ref self:  ERC721VotesComponent::ComponentState<TContractState>,
+        ref self: ERC721VotesComponent::ComponentState<TContractState>,
         account: ContractAddress,
         delegatee: ContractAddress
-    ){}
+    ) {}
 
 
     fn after_delegate(
-        ref self:  ERC721VotesComponent::ComponentState<TContractState>,
+        ref self: ERC721VotesComponent::ComponentState<TContractState>,
         account: ContractAddress,
         delegatee: ContractAddress
-    ){}
+    ) {}
 }
 
-   
 
 //
 // Offchain message hash generation helpers.

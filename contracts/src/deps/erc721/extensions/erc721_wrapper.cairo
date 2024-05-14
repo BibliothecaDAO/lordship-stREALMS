@@ -1,4 +1,3 @@
-
 use openzeppelin::token::erc721::interface::{IERC721Dispatcher};
 use starknet::ContractAddress;
 
@@ -25,7 +24,6 @@ trait IERC721Wrapper<TState> {
         tokenId: u256,
         data: Span<felt252>
     ) -> felt252;
-
 }
 
 
@@ -34,7 +32,9 @@ mod ERC721WrapperComponent {
     use openzeppelin::token::erc721::ERC721Component;
     use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
     use openzeppelin::token::erc721::ERC721Component::InternalTrait as ERC721InternalTraits;
-    use openzeppelin::token::erc721::interface::{IERC721, IERC721Dispatcher, IERC721DispatcherTrait};
+    use openzeppelin::token::erc721::interface::{
+        IERC721, IERC721Dispatcher, IERC721DispatcherTrait
+    };
     use openzeppelin::token::erc721::interface::IERC721_RECEIVER_ID;
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use openzeppelin::introspection::src5::SRC5Component;
@@ -53,7 +53,7 @@ mod ERC721WrapperComponent {
         const UNSUPPORTED_TOKEN: felt252 = 'Wrapper: unsupported token';
         const INCORRECT_OWNER: felt252 = 'Wrapper: incorrect owner';
     }
- 
+
     #[embeddable_as(ERC721WrapperImpl)]
     impl ERC721Wrapper<
         TContractState,
@@ -63,20 +63,22 @@ mod ERC721WrapperComponent {
         +SRC5Component::HasComponent<TContractState>,
         +Drop<TContractState>
     > of IERC721Wrapper<ComponentState<TContractState>> {
-        
         fn deposit_for(
-            ref self: ComponentState<TContractState>, account: ContractAddress, mut token_ids: Span<u256>
+            ref self: ComponentState<TContractState>,
+            account: ContractAddress,
+            mut token_ids: Span<u256>
         ) -> bool {
             let underlying = self.underlying();
             loop {
                 match token_ids.pop_front() {
                     Option::Some(token_id) => {
-                        underlying.transfer_from(get_caller_address(), get_contract_address(), *token_id);
+                        underlying
+                            .transfer_from(get_caller_address(), get_contract_address(), *token_id);
 
                         let mut erc721_component = get_dep_component_mut!(ref self, ERC721);
                         erc721_component._safe_mint(account, *token_id, array![].span());
                     },
-                    Option::None => {break;}
+                    Option::None => { break; }
                 }
             };
 
@@ -85,9 +87,10 @@ mod ERC721WrapperComponent {
 
 
         fn withdraw_to(
-            ref self: ComponentState<TContractState>, account: ContractAddress, mut token_ids: Span<u256>
+            ref self: ComponentState<TContractState>,
+            account: ContractAddress,
+            mut token_ids: Span<u256>
         ) -> bool {
-
             let underlying = self.underlying();
             loop {
                 match token_ids.pop_front() {
@@ -97,20 +100,19 @@ mod ERC721WrapperComponent {
                         let mut erc721_component = get_dep_component_mut!(ref self, ERC721);
                         erc721_component._update(Zeroable::zero(), *token_id, get_caller_address());
 
-                        underlying.transfer_from(get_contract_address(), get_caller_address(), *token_id);
+                        underlying
+                            .transfer_from(get_contract_address(), get_caller_address(), *token_id);
                     },
-                    Option::None => {break;}
+                    Option::None => { break; }
                 }
             };
 
             true
-        
         }
 
         fn underlying(self: @ComponentState<TContractState>) -> IERC721Dispatcher {
             self.ERC721Wrapper_underlying.read()
         }
-    
 
 
         /// Called whenever the implementing contract receives `token_id` through
@@ -126,7 +128,6 @@ mod ERC721WrapperComponent {
             self._on_erc721_received(from, token_id);
             IERC721_RECEIVER_ID
         }
-    
 
 
         fn onERC721Received(
@@ -139,9 +140,7 @@ mod ERC721WrapperComponent {
             self._on_erc721_received(from, tokenId);
             IERC721_RECEIVER_ID
         }
-    
     }
-
 
 
     //
@@ -159,9 +158,8 @@ mod ERC721WrapperComponent {
     > of InternalTrait<TContractState> {
         /// This should be used inside the contract's constructor.
         fn initializer(ref self: ComponentState<TContractState>, underlying: ContractAddress) {
-
             // set the underlying token address
-            self.ERC721Wrapper_underlying.write(IERC721Dispatcher {contract_address: underlying});
+            self.ERC721Wrapper_underlying.write(IERC721Dispatcher { contract_address: underlying });
 
             /// register the IERC721Receiver interface ID.
             let mut src5_component = get_dep_component_mut!(ref self, SRC5);
@@ -171,7 +169,9 @@ mod ERC721WrapperComponent {
         /// @dev Mint a wrapped token to cover any underlyingToken that would have been transferred by mistake. Internal
         /// function that can be exposed with access control if desired.
         ///
-        fn recover(ref self: ComponentState<TContractState>, account: ContractAddress, token_id: u256) -> u256 {
+        fn recover(
+            ref self: ComponentState<TContractState>, account: ContractAddress, token_id: u256
+        ) -> u256 {
             let owner = self.underlying().owner_of(token_id);
             assert(owner == get_caller_address(), Errors::INCORRECT_OWNER);
 
@@ -179,12 +179,16 @@ mod ERC721WrapperComponent {
             erc721_component._safe_mint(account, token_id, array![].span());
 
             return token_id;
-
         }
 
 
-        fn _on_erc721_received(ref self: ComponentState<TContractState>, from: ContractAddress, token_id: u256) {
-            assert(self.underlying().contract_address == get_caller_address(), Errors::UNSUPPORTED_TOKEN);
+        fn _on_erc721_received(
+            ref self: ComponentState<TContractState>, from: ContractAddress, token_id: u256
+        ) {
+            assert(
+                self.underlying().contract_address == get_caller_address(),
+                Errors::UNSUPPORTED_TOKEN
+            );
 
             let mut erc721_component = get_dep_component_mut!(ref self, ERC721);
             erc721_component._safe_mint(from, token_id, array![].span());

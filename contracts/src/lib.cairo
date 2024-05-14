@@ -1,12 +1,9 @@
-
 mod deps {
     mod erc721 {
         mod extensions;
     }
 }
 mod strealm;
-
-
 
 
 /// The goal of this contract is create a way to allow realm nft holders to get 
@@ -53,20 +50,22 @@ mod LORDSHIP {
 
     // ERC721Votes
     #[abi(embed_v0)]
-    impl ERC721VotesComponentImpl = ERC721VotesComponent::ERC721VotesImpl<ContractState>; 
-    
+    impl ERC721VotesComponentImpl =
+        ERC721VotesComponent::ERC721VotesImpl<ContractState>;
+
     // ERC721Wrapper
     #[abi(embed_v0)]
-    impl ERC721WrapperComponentImpl = ERC721WrapperComponent::ERC721WrapperImpl<ContractState>;
+    impl ERC721WrapperComponentImpl =
+        ERC721WrapperComponent::ERC721WrapperImpl<ContractState>;
 
     // ERC721Mixin
     #[abi(embed_v0)]
     impl ERC721MixinImpl = ERC721Component::ERC721MixinImpl<ContractState>;
-    
+
     // Nonces
     #[abi(embed_v0)]
     impl NoncesImpl = NoncesComponent::NoncesImpl<ContractState>;
-    
+
     // StRealm
     #[abi(embed_v0)]
     impl StRealmComponentImpl = StRealmComponent::StRealmImpl<ContractState>;
@@ -146,7 +145,6 @@ mod LORDSHIP {
             token_id: u256,
             auth: ContractAddress
         ) {
-
             let ownerBeforeTransfer: ContractAddress = self.owner_of(token_id);
             let ownerAfterTransfer: ContractAddress = to;
 
@@ -154,7 +152,7 @@ mod LORDSHIP {
             let mut strealm_component = get_dep_component_mut!(ref self, StRealm);
             strealm_component._claim_stream(ownerBeforeTransfer);
             strealm_component._claim_stream(ownerAfterTransfer);
-            
+
             // transfer voting units 
             let mut erc721_votes_component = get_dep_component_mut!(ref self, ERC721Votes);
             erc721_votes_component.transfer_voting_units(ownerBeforeTransfer, to, 1);
@@ -188,11 +186,11 @@ mod LORDSHIP {
             delegatee: ContractAddress
         ) {
             let mut strealm_component = get_dep_component_mut!(ref self, StRealm);
-            if delegatee.is_zero(){
+            if delegatee.is_zero() {
                 strealm_component._claim_stream(account);
                 strealm_component._end_stream(account);
             } else {
-                if self.delegates(account).is_zero(){
+                if self.delegates(account).is_zero() {
                     // no current delegates
                     strealm_component._reset_stream(account);
                 }
@@ -209,11 +207,11 @@ mod LORDSHIP {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, 
-        owner: ContractAddress, 
+        ref self: ContractState,
+        owner: ContractAddress,
         underlying: ContractAddress,
-        flow_rate: u256, 
-        reward_token: ContractAddress, 
+        flow_rate: u256,
+        reward_token: ContractAddress,
         reward_payer: ContractAddress
     ) {
         self.erc721.initializer("stRealm", "stREALM", "");

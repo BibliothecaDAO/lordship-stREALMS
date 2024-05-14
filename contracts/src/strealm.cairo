@@ -1,4 +1,3 @@
-
 use openzeppelin::token::erc721::interface::{IERC721Dispatcher};
 use starknet::ContractAddress;
 
@@ -12,7 +11,6 @@ trait IStRealm<TState> {
     fn update_flow_rate(ref self: TState, new_rate: u256);
     fn update_reward_token(ref self: TState, new_token_address: ContractAddress);
     fn update_reward_payer(ref self: TState, new_payer_address: ContractAddress);
-
 }
 
 #[starknet::component]
@@ -20,7 +18,9 @@ mod StRealmComponent {
     use openzeppelin::token::erc721::ERC721Component;
     use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
     use openzeppelin::token::erc721::ERC721Component::InternalTrait as ERC721InternalTraits;
-    use openzeppelin::token::erc721::interface::{IERC721, IERC721Dispatcher, IERC721DispatcherTrait};
+    use openzeppelin::token::erc721::interface::{
+        IERC721, IERC721Dispatcher, IERC721DispatcherTrait
+    };
     use openzeppelin::token::erc721::interface::IERC721_RECEIVER_ID;
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use openzeppelin::introspection::src5::SRC5Component;
@@ -31,13 +31,13 @@ mod StRealmComponent {
 
 
     use core::integer::BoundedInt;
-    
+
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Flow {
         rate: u256, // flow rate per second
         end_at: u64
     }
-    
+
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Stream {
         flow_id: u32,
@@ -95,7 +95,7 @@ mod StRealmComponent {
         amount: u256
     }
 
-    
+
     #[embeddable_as(StRealmImpl)]
     impl StRealm<
         TContractState,
@@ -117,14 +117,14 @@ mod StRealmComponent {
             let latest_flow_id = self.StRealm_latest_flow_id.read();
             self.StRealm_flows.read(latest_flow_id)
         }
-        
+
         //
         // Mutables
         //
         fn claim(ref self: ComponentState<TContractState>) {
             self._claim_stream(starknet::get_caller_address())
         }
-           
+
         fn update_flow_rate(ref self: ComponentState<TContractState>, new_rate: u256) {
             let ownable_component = get_dep_component!(@self, Ownable);
             ownable_component.assert_only_owner();
@@ -132,22 +132,24 @@ mod StRealmComponent {
             self._update_flow_rate(new_rate);
         }
 
-        fn update_reward_token(ref self: ComponentState<TContractState>, new_token_address: ContractAddress){
+        fn update_reward_token(
+            ref self: ComponentState<TContractState>, new_token_address: ContractAddress
+        ) {
             let ownable_component = get_dep_component!(@self, Ownable);
             ownable_component.assert_only_owner();
 
             self._update_reward_token(new_token_address);
         }
 
-        fn update_reward_payer(ref self: ComponentState<TContractState>, new_payer_address: ContractAddress) {
+        fn update_reward_payer(
+            ref self: ComponentState<TContractState>, new_payer_address: ContractAddress
+        ) {
             let ownable_component = get_dep_component!(@self, Ownable);
             ownable_component.assert_only_owner();
 
             self._update_reward_payer(new_payer_address);
         }
     }
-
-
 
 
     //
@@ -163,12 +165,11 @@ mod StRealmComponent {
         +ERC721Component::ERC721HooksTrait<TContractState>,
         +Drop<TContractState>,
     > of InternalTrait<TContractState> {
-
         /// This should be used inside the contract's constructor.
         fn initializer(
-            ref self: ComponentState<TContractState>, 
-            flow_rate: u256, 
-            reward_token: ContractAddress, 
+            ref self: ComponentState<TContractState>,
+            flow_rate: u256,
+            reward_token: ContractAddress,
             reward_payer: ContractAddress
         ) {
             self._update_flow_rate(flow_rate);
@@ -177,35 +178,36 @@ mod StRealmComponent {
         }
 
 
- 
         fn _update_flow_rate(ref self: ComponentState<TContractState>, new_flow_rate: u256) {
             self._end_latest_flow();
             self._start_new_flow(new_flow_rate);
         }
 
-        fn _update_reward_token(ref self: ComponentState<TContractState>, new_reward_token_address: ContractAddress) {
+        fn _update_reward_token(
+            ref self: ComponentState<TContractState>, new_reward_token_address: ContractAddress
+        ) {
             self
-            .emit(
-                RewardTokenUpdated { 
-                    old_address: self.StRealm_reward_token.read(), 
-                    new_address: new_reward_token_address 
-                }
-            );
+                .emit(
+                    RewardTokenUpdated {
+                        old_address: self.StRealm_reward_token.read(),
+                        new_address: new_reward_token_address
+                    }
+                );
             self.StRealm_reward_token.write(new_reward_token_address);
         }
 
-        fn _update_reward_payer(ref self: ComponentState<TContractState>, new_reward_payer_address: ContractAddress) {
+        fn _update_reward_payer(
+            ref self: ComponentState<TContractState>, new_reward_payer_address: ContractAddress
+        ) {
             self
-            .emit(
-                RewardPayerUpdated { 
-                    old_address: self.StRealm_reward_payer.read(), 
-                    new_address: new_reward_payer_address 
-                }
-            );
+                .emit(
+                    RewardPayerUpdated {
+                        old_address: self.StRealm_reward_payer.read(),
+                        new_address: new_reward_payer_address
+                    }
+                );
             self.StRealm_reward_payer.write(new_reward_payer_address);
         }
-
-
 
 
         fn _end_latest_flow(ref self: ComponentState<TContractState>) {
@@ -214,14 +216,13 @@ mod StRealmComponent {
             flow.end_at = starknet::get_block_timestamp();
             self.StRealm_flows.write(flow_id, flow);
         }
-        
+
         fn _start_new_flow(ref self: ComponentState<TContractState>, new_flow_rate: u256) {
             let new_flow_id = self.StRealm_latest_flow_id.read() + 1;
-            let new_flow: Flow = Flow {rate: new_flow_rate, end_at: BoundedInt::max()};
+            let new_flow: Flow = Flow { rate: new_flow_rate, end_at: BoundedInt::max() };
             self.StRealm_flows.write(new_flow_id, new_flow);
         }
 
- 
 
         fn _reset_stream(ref self: ComponentState<TContractState>, owner: ContractAddress) {
             let mut stream: Stream = self.StRealm_streams.read(owner);
@@ -240,7 +241,12 @@ mod StRealmComponent {
         }
 
 
-        fn _streamed_amount(ref self: ComponentState<TContractState>, token_amount: u256, stream_duration: u64, flow_rate: u256) -> u256 {
+        fn _streamed_amount(
+            ref self: ComponentState<TContractState>,
+            token_amount: u256,
+            stream_duration: u64,
+            flow_rate: u256
+        ) -> u256 {
             token_amount * stream_duration.into() * flow_rate
         }
 
@@ -261,26 +267,22 @@ mod StRealmComponent {
                     let stream_duration = stream_end_at - stream.start_at;
                     let erc721_component = get_dep_component!(@self, ERC721);
 
-                    let streamed_amount 
-                        = self._streamed_amount(
-                            erc721_component.balance_of(owner), stream_duration, flow.rate);
-                        
+                    let streamed_amount = self
+                        ._streamed_amount(
+                            erc721_component.balance_of(owner), stream_duration, flow.rate
+                        );
 
                     // send reward
                     if streamed_amount.is_non_zero() {
                         assert(
-                            IERC20Dispatcher{contract_address: self.StRealm_reward_token.read()}
-                                .transfer_from(self.StRealm_reward_payer.read(), owner, streamed_amount),
-                                Errors::FAILED_TRANSFER
+                            IERC20Dispatcher { contract_address: self.StRealm_reward_token.read() }
+                                .transfer_from(
+                                    self.StRealm_reward_payer.read(), owner, streamed_amount
+                                ),
+                            Errors::FAILED_TRANSFER
                         );
-                        self
-                            .emit(
-                                RewardClaimed { 
-                                    recipient: owner, 
-                                    amount: streamed_amount 
-                                }
-                            );
-                     }
+                        self.emit(RewardClaimed { recipient: owner, amount: streamed_amount });
+                    }
 
                     // reset stream
                     self._reset_stream(owner);
