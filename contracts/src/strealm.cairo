@@ -10,7 +10,6 @@ trait IStRealm<TState> {
 
     fn reward_claim(ref self: TState);
     fn update_flow_rate(ref self: TState, new_rate: u256);
-    fn update_reward_token(ref self: TState, new_token_address: ContractAddress);
     fn update_reward_payer(ref self: TState, new_payer_address: ContractAddress);
 }
 
@@ -23,7 +22,6 @@ mod StRealmComponent {
     use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-    use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
     use openzeppelin::token::erc721::ERC721Component::InternalTrait as ERC721InternalTraits;
     use openzeppelin::token::erc721::ERC721Component;
     use openzeppelin::token::erc721::interface::IERC721_RECEIVER_ID;
@@ -139,15 +137,6 @@ mod StRealmComponent {
             accesscontrol_component.assert_only_role(DEFAULT_ADMIN_ROLE);
 
             self._update_flow_rate(new_rate);
-        }
-
-        fn update_reward_token(
-            ref self: ComponentState<TContractState>, new_token_address: ContractAddress
-        ) {
-            let accesscontrol_component = get_dep_component!(@self, AccessControl);
-            accesscontrol_component.assert_only_role(DEFAULT_ADMIN_ROLE);
-
-            self._update_reward_token(new_token_address);
         }
 
         fn update_reward_payer(
