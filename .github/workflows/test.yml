@@ -7,15 +7,7 @@ on:
   pull_request: {}
 
 jobs:
-  setup-environment:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up environment
-        run: |
-          sudo apt-get update
-
-  test-scarb-fmt:
-    needs: [setup-environment]
+  check-fmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,8 +16,7 @@ jobs:
           scarb-version: "2.6.4"
       - run: cd contracts && scarb fmt --check
 
-  test-scarb-build:
-    needs: [setup-environment]
+  check-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -33,3 +24,12 @@ jobs:
         with:
           scarb-version: "2.6.4"
       - run: cd contracts && scarb build
+
+  check-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.6.4"
+      - run: cd contracts && scarb test
