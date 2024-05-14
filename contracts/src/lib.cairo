@@ -12,8 +12,11 @@ mod StRealm {
     use openzeppelin::token::erc721::{ERC721Component};
     use strealm::deps::erc721::extensions::ERC721VotesComponent::InternalTrait as ERC721VotesInternalTrait;
     use strealm::deps::erc721::extensions::ERC721VotesComponent;
+    use strealm::deps::erc721::extensions::ERC721WrapperComponent::InternalTrait as ERC721WrapperInternalTrait;
+    use strealm::deps::erc721::extensions::ERC721WrapperComponent;
     use openzeppelin::utils::cryptography::nonces::NoncesComponent;
     use openzeppelin::utils::cryptography::snip12::SNIP12Metadata;
+
     use starknet::ContractAddress;
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -21,12 +24,18 @@ mod StRealm {
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
     component!(path: ERC721VotesComponent, storage: erc721_votes, event: ERC721VotesEvent);
+    component!(path: ERC721WrapperComponent, storage: erc721_wrapper, event: ERC721WrapperEvent);
     component!(path: NoncesComponent, storage: nonces, event: NoncesEvent);
 
     // ERC721Votes
     #[abi(embed_v0)]
     impl ERC721VotesComponentImpl =
         ERC721VotesComponent::ERC721VotesImpl<ContractState>; 
+    
+    // ERC721Wrapper
+    #[abi(embed_v0)]
+    impl ERC721WrapperComponentImpl =
+        ERC721WrapperComponent::ERC721WrapperImpl<ContractState>;
 
     // ERC721Mixin
     #[abi(embed_v0)]
@@ -47,6 +56,8 @@ mod StRealm {
         #[substorage(v0)]
         erc721_votes: ERC721VotesComponent::Storage,
         #[substorage(v0)]
+        erc721_wrapper: ERC721WrapperComponent::Storage,
+        #[substorage(v0)]
         erc721: ERC721Component::Storage,
         #[substorage(v0)]
         src5: SRC5Component::Storage,
@@ -61,6 +72,8 @@ mod StRealm {
     enum Event {
         #[flat]
         ERC721VotesEvent: ERC721VotesComponent::Event,
+        #[flat]
+        ERC721WrapperEvent: ERC721WrapperComponent::Event,
         #[flat]
         ERC721Event: ERC721Component::Event,
         #[flat]
@@ -117,8 +130,9 @@ mod StRealm {
 
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
+    fn constructor(ref self: ContractState, owner: ContractAddress, underlying: ContractAddress) {
         self.erc721.initializer("stRealm", "stREALM", "");
+        self.erc721_wrapper.initializer(underlying);
         self.ownable.initializer(owner);
     }
 }
