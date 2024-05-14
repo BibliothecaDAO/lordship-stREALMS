@@ -5,7 +5,8 @@ use StRealmComponent::{Flow, Stream};
 #[starknet::interface]
 trait IStRealm<TState> {
     fn get_stream(self: @TState, owner: ContractAddress) -> Stream;
-    fn get_latest_flow(self: @TState) -> Flow;
+    fn get_flow(self: @TState, flow_id: u32) -> Flow;
+    fn get_latest_flow_id(self: @TState) -> u32;
 
     fn claim(ref self: TState);
     fn update_flow_rate(ref self: TState, new_rate: u256);
@@ -114,10 +115,14 @@ mod StRealmComponent {
             self.StRealm_streams.read(owner)
         }
 
-        fn get_latest_flow(self: @ComponentState<TContractState>) -> Flow {
-            let latest_flow_id = self.StRealm_latest_flow_id.read();
-            self.StRealm_flows.read(latest_flow_id)
+        fn get_flow(self: @ComponentState<TContractState>, flow_id: u32) -> Flow {
+            self.StRealm_flows.read(flow_id)
         }
+
+        fn get_latest_flow_id(self: @ComponentState<TContractState>) -> u32 {
+            self.StRealm_latest_flow_id.read()
+        }
+
 
         //
         // Mutables
