@@ -228,13 +228,7 @@ mod StRealmComponent {
             let new_flow: Flow = Flow { rate: new_flow_rate, end_at: BoundedInt::max() };
             self.StRealm_flows.write(new_flow_id, new_flow);
 
-            self
-                .emit(
-                    FlowRateChanged {
-                        id: new_flow_id,
-                        rate: new_flow.rate
-                    }
-                );
+            self.emit(FlowRateChanged { id: new_flow_id, rate: new_flow.rate });
         }
 
 
@@ -248,7 +242,7 @@ mod StRealmComponent {
 
         fn _end_stream(ref self: ComponentState<TContractState>, owner: ContractAddress) {
             if owner.is_non_zero() {
-                self.StRealm_streams.write(owner, Stream {flow_id: 0, start_at: 0});
+                self.StRealm_streams.write(owner, Stream { flow_id: 0, start_at: 0 });
             }
         }
 
@@ -276,7 +270,6 @@ mod StRealmComponent {
                     } else {
                         starknet::get_block_timestamp()
                     };
-
 
                     let stream_duration = stream_end_at - stream.start_at;
                     let erc721_component = get_dep_component!(@self, ERC721);
