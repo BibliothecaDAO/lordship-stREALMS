@@ -211,7 +211,7 @@ mod Lordship {
     #[generate_trait]
     #[abi(per_item)]
     impl ERC721MinterImpl of ERC721MinterTrait {
-        #[abi(embed_v0)]
+        #[external(v0)]
         fn safe_mint(
             ref self: ContractState,
             recipient: ContractAddress,
