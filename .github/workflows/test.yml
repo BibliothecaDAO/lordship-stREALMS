@@ -1,34 +1,35 @@
-name: test
+name: test-contracts
 
-on: pull_request
-
-env:
-  FOUNDRY_PROFILE: ci
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
 
 jobs:
-  check:
-    strategy:
-      fail-fast: true
-
-    name: Foundry project
+  check-fmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
+      - uses: software-mansion/setup-scarb@v1
         with:
-          submodules: recursive
+          scarb-version: "2.6.4"
+      - run: cd contracts && scarb fmt --check
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+  check-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: software-mansion/setup-scarb@v1
         with:
-          version: nightly
+          scarb-version: "2.6.4"
+      - run: cd contracts && scarb build
 
-      - name: Run Forge build
-        run: |
-          forge --version
-          forge build --via-ir --sizes
-        id: build
-
-      - name: Run Forge tests
-        run: |
-          forge test -vvv --via-ir
-        id: test
+  check-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.6.4"
+      - run: cd contracts && scarb test
