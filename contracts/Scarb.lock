@@ -7,8 +7,14 @@ version = "0.12.0"
 source = "git+https://github.com/openzeppelin/cairo-contracts?rev=e190e55#e190e55ce689809dd09b6ed9fef167fa35bcc19c"
 
 [[package]]
+name = "snforge_std"
+version = "0.23.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry?tag=v0.23.0#f2bff8f796763ada77fe6033ec1b034ceee22abd"
+
+[[package]]
 name = "strealm"
 version = "0.1.0"
 dependencies = [
  "openzeppelin",
+ "snforge_std",
 ]
