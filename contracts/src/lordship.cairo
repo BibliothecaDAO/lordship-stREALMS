@@ -229,7 +229,6 @@ mod Lordship {
         default_admin: ContractAddress,
         minter: ContractAddress,
         upgrader: ContractAddress,
-        underlying: ContractAddress,
         flow_rate: u256,
         reward_token: ContractAddress,
         reward_payer: ContractAddress
