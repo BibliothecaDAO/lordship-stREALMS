@@ -1,19 +1,55 @@
-use StRealmComponent::{Flow, Stream};
-use openzeppelin::token::erc721::interface::{IERC721Dispatcher};
-use starknet::ContractAddress;
 #[starknet::interface]
 trait IStRealm<TState> {
-    fn get_reward_token(self: @TState) -> ContractAddress;
-    fn get_reward_payer(self: @TState) -> ContractAddress;
-    fn get_stream(self: @TState, owner: ContractAddress) -> Stream;
-    fn get_flow(self: @TState, flow_id: u32) -> Flow;
-    fn get_latest_flow_id(self: @TState) -> u32;
+    fn get_reward_token(self: @TState) -> starknet::ContractAddress;
+    fn get_reward_payer(self: @TState) -> starknet::ContractAddress;
+    fn get_stream(self: @TState, owner: starknet::ContractAddress) -> strealm_structs::Stream;
+    fn get_flow(self: @TState, flow_id: u64) -> strealm_structs::Flow;
+    fn get_latest_flow_id(self: @TState) -> u64;
     fn get_reward_balance(self: @TState) -> u256;
 
     fn reward_claim(ref self: TState);
     fn update_flow_rate(ref self: TState, new_rate: u256);
-    fn update_reward_payer(ref self: TState, new_payer_address: ContractAddress);
+    fn update_reward_payer(ref self: TState, new_payer_address: starknet::ContractAddress);
 }
+
+
+mod strealm_structs {
+    use starknet::storage_access::StorePacking;
+    
+    #[derive(Copy, Drop, Serde, starknet::Store)]
+    struct Flow {
+        rate: u256, // flow rate per second
+        end_at: u64
+    }
+
+    #[derive(Copy, Drop, Serde)]
+    struct Stream {
+        flow_id: u64,
+        start_at: u64
+    }
+
+
+    const TWO_POW_64: u128 = 0x10000000000000000;
+    const MASK_64: u128 = 0xffffffffffffffff;
+
+    impl StreamStorePacking of StorePacking<Stream, u128> {
+        fn pack(value: Stream) -> u128 {
+            value.flow_id.into() + (value.start_at.into() * TWO_POW_64) 
+        }
+
+        fn unpack(value: u128) -> Stream {
+            let flow_id = value & MASK_64;
+            let start_at = (value / TWO_POW_64);
+
+            Stream {
+                flow_id: flow_id.try_into().unwrap(),
+                start_at: start_at.try_into().unwrap(),
+            }
+        }
+    }
+}
+
+
 
 #[starknet::component]
 mod StRealmComponent {
@@ -30,27 +66,17 @@ mod StRealmComponent {
     use openzeppelin::token::erc721::interface::{
         IERC721, IERC721Dispatcher, IERC721DispatcherTrait
     };
-    use starknet::{ContractAddress};
+    use starknet::{ContractAddress, Store};
+    use super::strealm_structs::{Flow, Stream};
 
-    #[derive(Copy, Drop, Serde, starknet::Store)]
-    struct Flow {
-        rate: u256, // flow rate per second
-        end_at: u64
-    }
-
-    #[derive(Copy, Drop, Serde, starknet::Store)]
-    struct Stream {
-        flow_id: u32,
-        start_at: u64
-    }
 
     #[storage]
     struct Storage {
         StRealm_reward_token: ContractAddress,
         StRealm_reward_payer: ContractAddress,
         StRealm_streams: LegacyMap<ContractAddress, Stream>,
-        StRealm_flows: LegacyMap<u32, Flow>,
-        StRealm_latest_flow_id: u32,
+        StRealm_flows: LegacyMap<u64, Flow>,
+        StRealm_latest_flow_id: u64,
         StRealm_staker_reward_balance: LegacyMap<ContractAddress, u256>
     }
 
@@ -72,7 +98,7 @@ mod StRealmComponent {
     #[derive(Drop, PartialEq, starknet::Event)]
     struct FlowRateChanged {
         #[key]
-        id: u32,
+        id: u64,
         rate: u256
     }
 
@@ -115,11 +141,11 @@ mod StRealmComponent {
             self.StRealm_streams.read(owner)
         }
 
-        fn get_flow(self: @ComponentState<TContractState>, flow_id: u32) -> Flow {
+        fn get_flow(self: @ComponentState<TContractState>, flow_id: u64) -> Flow {
             self.StRealm_flows.read(flow_id)
         }
 
-        fn get_latest_flow_id(self: @ComponentState<TContractState>) -> u32 {
+        fn get_latest_flow_id(self: @ComponentState<TContractState>) -> u64 {
             self.StRealm_latest_flow_id.read()
         }
 
@@ -257,7 +283,7 @@ mod StRealmComponent {
                 let stream: Stream = self.StRealm_streams.read(owner);
                 if stream.flow_id.is_non_zero() && stream.start_at.is_non_zero() {
                     let flow: Flow = self.StRealm_flows.read(stream.flow_id);
-                    let latest_flow_id: u32 = self.StRealm_latest_flow_id.read();
+                    let latest_flow_id: u64 = self.StRealm_latest_flow_id.read();
 
                     let stream_end_at = if latest_flow_id > stream.flow_id {
                         flow.end_at
