@@ -15,7 +15,7 @@ trait IStRealm<TState> {
 
 mod strealm_structs {
     use starknet::storage_access::StorePacking;
-    
+
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Flow {
         rate: u256, // flow rate per second
@@ -34,21 +34,17 @@ mod strealm_structs {
 
     impl StreamStorePacking of StorePacking<Stream, u128> {
         fn pack(value: Stream) -> u128 {
-            value.flow_id.into() + (value.start_at.into() * TWO_POW_64) 
+            value.flow_id.into() + (value.start_at.into() * TWO_POW_64)
         }
 
         fn unpack(value: u128) -> Stream {
             let flow_id = value & MASK_64;
             let start_at = (value / TWO_POW_64);
 
-            Stream {
-                flow_id: flow_id.try_into().unwrap(),
-                start_at: start_at.try_into().unwrap(),
-            }
+            Stream { flow_id: flow_id.try_into().unwrap(), start_at: start_at.try_into().unwrap(), }
         }
     }
 }
-
 
 
 #[starknet::component]
