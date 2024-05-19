@@ -3,6 +3,8 @@ use openzeppelin::token::erc721::interface::{IERC721Dispatcher};
 use starknet::ContractAddress;
 #[starknet::interface]
 trait IStRealm<TState> {
+    fn get_reward_token(self: @TState) -> ContractAddress;
+    fn get_reward_payer(self: @TState) -> ContractAddress;
     fn get_stream(self: @TState, owner: ContractAddress) -> Stream;
     fn get_flow(self: @TState, flow_id: u32) -> Flow;
     fn get_latest_flow_id(self: @TState) -> u32;
@@ -123,6 +125,14 @@ mod StRealmComponent {
 
         fn get_reward_balance(self: @ComponentState<TContractState>) -> u256 {
             self._reward_balance(starknet::get_caller_address())
+        }
+
+        fn get_reward_token(self: @ComponentState<TContractState>) -> ContractAddress {
+            self.StRealm_reward_token.read()
+        }
+
+        fn get_reward_payer(self: @ComponentState<TContractState>) -> ContractAddress {
+            self.StRealm_reward_payer.read()
         }
 
 
