@@ -218,6 +218,8 @@ mod StRealmComponent {
 
         fn _start_new_flow(ref self: ComponentState<TContractState>, new_flow_rate: u256) {
             let new_flow_id = self.StRealm_latest_flow_id.read() + 1;
+            self.StRealm_latest_flow_id.write(new_flow_id);
+
             let new_flow: Flow = Flow { rate: new_flow_rate, end_at: BoundedInt::max() };
             self.StRealm_flows.write(new_flow_id, new_flow);
 
