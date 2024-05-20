@@ -121,7 +121,7 @@ mod Lordship {
     /// Required for hash computation.
     impl SNIP12MetadataImpl of SNIP12Metadata {
         fn name() -> felt252 {
-            'stRealm'
+            'stREALM'
         }
         fn version() -> felt252 {
             '1'
