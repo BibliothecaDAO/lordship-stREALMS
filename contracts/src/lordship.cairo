@@ -19,10 +19,7 @@ const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 #[starknet::interface]
 trait IERC721Minter<TState> {
     fn safe_mint(
-        ref self: TState,
-        recipient: starknet::ContractAddress,
-        token_id: u256,
-        data: Span<felt252>,
+        ref self: TState, recipient: starknet::ContractAddress, token_id: u256, data: Span<felt252>,
     );
 }
 
@@ -44,8 +41,8 @@ mod Lordship {
     use strealm::components::erc721::extensions::ERC721VotesComponent;
     use strealm::components::strealm::StRealmComponent::InternalTrait as StRealmInternalTrait;
     use strealm::components::strealm::StRealmComponent;
-    use super::{MINTER_ROLE, UPGRADER_ROLE};
     use super::{IERC721Minter};
+    use super::{MINTER_ROLE, UPGRADER_ROLE};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -151,7 +148,6 @@ mod Lordship {
             token_id: u256,
             auth: ContractAddress
         ) {
-
             let owner_before_transfer: ContractAddress = self._owner_of(token_id);
             let owner_after_transfer: ContractAddress = to;
 

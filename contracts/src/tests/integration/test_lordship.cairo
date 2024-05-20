@@ -7,14 +7,17 @@ use openzeppelin::access::accesscontrol::accesscontrol::AccessControlComponent::
 use openzeppelin::access::accesscontrol::interface::{
     AccessControlABIDispatcher, AccessControlABIDispatcherTrait
 };
-use openzeppelin::upgrades::interface::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
 use openzeppelin::account::interface::{AccountABIDispatcher, AccountABIDispatcherTrait};
 use openzeppelin::token::erc20::interface::{IERC20DispatcherTrait, IERC20Dispatcher};
-use openzeppelin::token::erc721::interface::{ERC721ABI, ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
 use openzeppelin::token::erc721::erc721::ERC721Component::InternalTrait as ERC721InternalTrait;
+use openzeppelin::token::erc721::interface::{
+    ERC721ABI, ERC721ABIDispatcher, ERC721ABIDispatcherTrait
+};
+use openzeppelin::upgrades::interface::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
 use snforge_std::{
     declare, ContractClassTrait, spy_events, SpyOn, EventSpy, EventAssertions, test_address,
-    start_roll, stop_roll, start_warp, stop_warp, CheatTarget, start_prank, stop_prank, get_class_hash
+    start_roll, stop_roll, start_warp, stop_warp, CheatTarget, start_prank, stop_prank,
+    get_class_hash
 };
 use starknet::ContractAddress;
 use starknet::contract_address_const;
@@ -26,8 +29,8 @@ use strealm::components::strealm::StRealmComponent;
 use strealm::components::strealm::{IStRealmDispatcher, IStRealmDispatcherTrait};
 use strealm::lordship::Lordship;
 use strealm::lordship::{IERC721MinterDispatcher, IERC721MinterDispatcherTrait};
-use strealm::tests::mocks::erc20_mock::DualCaseERC20Mock;
 use strealm::tests::mocks::account_mock::DualCaseAccountMock;
+use strealm::tests::mocks::erc20_mock::DualCaseERC20Mock;
 
 
 /// 
@@ -66,8 +69,7 @@ fn ACCOUNT_MOCK_ADDRESS() -> ContractAddress {
     let public_key: felt252 = 123;
     public_key.serialize(ref constructor_calldata);
 
-    let (contract_address, _) 
-        = account_contract.deploy(@constructor_calldata).unwrap();
+    let (contract_address, _) = account_contract.deploy(@constructor_calldata).unwrap();
 
     contract_address
 }
@@ -127,17 +129,12 @@ fn test_constructor() {
     assert!(access_control_dispatcher.has_role(Lordship::UPGRADER_ROLE, UPGRADER()));
 
     // ensure erc721 was initialized properly
-    let erc721_dispatcher = ERC721ABIDispatcher {
-        contract_address: lordship_address
-    };
+    let erc721_dispatcher = ERC721ABIDispatcher { contract_address: lordship_address };
     assert_eq!(erc721_dispatcher.name(), "Staked Realm");
     assert_eq!(erc721_dispatcher.symbol(), "stREALM");
 
-
     // ensure strealm component was initialized properly
-    let strealm_dispatcher = IStRealmDispatcher {
-        contract_address: lordship_address
-    };
+    let strealm_dispatcher = IStRealmDispatcher { contract_address: lordship_address };
     assert_eq!(strealm_dispatcher.get_latest_flow_id(), 1);
     assert_eq!(strealm_dispatcher.get_flow(1).rate, FLOW_RATE());
     assert_eq!(strealm_dispatcher.get_flow(1).end_at, BoundedInt::max());
@@ -153,11 +150,10 @@ fn test_upgrade() {
     // change class hash to erc20 class hash
     start_prank(CheatTarget::One(lordship_address), UPGRADER());
     let new_class_hash = get_class_hash(ERC20_MOCK().contract_address);
-    IUpgradeableDispatcher{contract_address: lordship_address}.upgrade(new_class_hash);
+    IUpgradeableDispatcher { contract_address: lordship_address }.upgrade(new_class_hash);
     stop_prank(CheatTarget::One(lordship_address));
-    
 
-    let erc20_dispatcher = IERC20Dispatcher {contract_address: lordship_address};
+    let erc20_dispatcher = IERC20Dispatcher { contract_address: lordship_address };
     assert_eq!(erc20_dispatcher.total_supply(), 0);
 }
 
@@ -170,8 +166,8 @@ fn test_upgrade_no_permission() {
     // change class hash to erc20 class hash
     // start_prank(CheatTarget::One(lordship_address), UPGRADER());
     let new_class_hash = get_class_hash(ERC20_MOCK().contract_address);
-    IUpgradeableDispatcher{contract_address: lordship_address}.upgrade(new_class_hash);
-    // stop_prank(CheatTarget::One(lordship_address));
+    IUpgradeableDispatcher { contract_address: lordship_address }.upgrade(new_class_hash);
+// stop_prank(CheatTarget::One(lordship_address));
 }
 
 
@@ -179,18 +175,16 @@ fn test_upgrade_no_permission() {
 fn test_safe_mint() {
     let mut lordship_address = DEPLOY_LORDSHIP_CONTRACT();
 
-    
     start_prank(CheatTarget::One(lordship_address), MINTER());
 
-    let erc721_minter_dispatcher = IERC721MinterDispatcher {contract_address: lordship_address};    
+    let erc721_minter_dispatcher = IERC721MinterDispatcher { contract_address: lordship_address };
     let mint_token_id = 44_u256;
     let mint_recipient = ACCOUNT_MOCK_ADDRESS();
     let mint_data: Span<felt252> = array![].span();
     erc721_minter_dispatcher.safe_mint(mint_recipient, mint_token_id, mint_data);
     stop_prank(CheatTarget::One(lordship_address));
-    
 
-    let erc721_dispatcher = ERC721ABIDispatcher {contract_address: lordship_address};    
+    let erc721_dispatcher = ERC721ABIDispatcher { contract_address: lordship_address };
     assert_eq!(erc721_dispatcher.balance_of(mint_recipient), 1);
     assert_eq!(erc721_dispatcher.owner_of(mint_token_id), mint_recipient);
 }
@@ -200,15 +194,15 @@ fn test_safe_mint() {
 #[should_panic(expected: ('Caller is missing role',))]
 fn test_safe_mint_no_permission() {
     let mut lordship_address = DEPLOY_LORDSHIP_CONTRACT();
-    
+
     // start_prank(CheatTarget::One(lordship_address), MINTER());
 
-    let erc721_minter_dispatcher = IERC721MinterDispatcher {contract_address: lordship_address};    
+    let erc721_minter_dispatcher = IERC721MinterDispatcher { contract_address: lordship_address };
     let mint_token_id = 44_u256;
     let mint_recipient = ACCOUNT_MOCK_ADDRESS();
     let mint_data: Span<felt252> = array![].span();
     erc721_minter_dispatcher.safe_mint(mint_recipient, mint_token_id, mint_data);
-    // stop_prank(CheatTarget::One(lordship_address));
-    
+// stop_prank(CheatTarget::One(lordship_address));
+
 }
 

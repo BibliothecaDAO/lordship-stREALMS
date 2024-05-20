@@ -16,8 +16,8 @@ mod tests {
         mod test_lordship;
     }
     mod mocks {
+        mod account_mock;
         mod erc20_mock;
         mod strealm_mock;
-        mod account_mock;
     }
 }
