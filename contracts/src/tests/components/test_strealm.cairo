@@ -3,11 +3,11 @@ use core::integer::BoundedInt;
 use core::serde::Serde;
 use core::starknet::storage::StorageMapMemberAccessTrait;
 use openzeppelin::access::accesscontrol::accesscontrol::AccessControlComponent::InternalTrait as AccessComponentInternalTrait;
+use openzeppelin::token::erc20::interface::{IERC20DispatcherTrait, IERC20Dispatcher};
 use openzeppelin::token::erc721::erc721::ERC721Component::InternalTrait as ERC721InternalTrait;
-
 use snforge_std::{
     declare, ContractClassTrait, spy_events, SpyOn, EventSpy, EventAssertions, test_address,
-    start_roll, stop_roll, start_warp, stop_warp, CheatTarget
+    start_roll, stop_roll, start_warp, stop_warp, CheatTarget, start_prank, stop_prank
 };
 use starknet::ContractAddress;
 use starknet::contract_address_const;
@@ -16,9 +16,9 @@ use strealm::components::strealm::StRealmComponent::InternalTrait as StRealmInte
 use strealm::components::strealm::StRealmComponent::{Flow, Stream};
 use strealm::components::strealm::StRealmComponent;
 use strealm::components::strealm::{IStRealmDispatcher, IStRealmDispatcherTrait};
+use strealm::tests::mocks::erc20_mock::DualCaseERC20Mock;
 
 use strealm::tests::mocks::strealm_mock::StRealmMock;
-
 
 /// 
 /// Constants
@@ -46,6 +46,27 @@ fn REWARD_PAYER() -> ContractAddress {
 
 type ComponentState = StRealmComponent::ComponentState<StRealmMock::ContractState>;
 type ContractState = StRealmMock::ContractState;
+
+
+fn ERC20_MOCK() -> IERC20Dispatcher {
+    // First declare and deploy a contract
+    let erc20_contract = declare("DualCaseERC20Mock").unwrap();
+    // Alternatively we could use `deploy_syscall` here
+    let mut constructor_calldata = array![];
+    let name: ByteArray = "MockToken";
+    let symbol: ByteArray = "MToken";
+    let supply: u256 = 2000000000000000000000000;
+    let recipient: ContractAddress = REWARD_PAYER();
+    name.serialize(ref constructor_calldata);
+    symbol.serialize(ref constructor_calldata);
+    supply.serialize(ref constructor_calldata);
+    recipient.serialize(ref constructor_calldata);
+
+    let (contract_address, _) = erc20_contract.deploy(@constructor_calldata).unwrap();
+
+    let dispatcher = IERC20Dispatcher { contract_address };
+    return dispatcher;
+}
 
 
 fn STREALM_COMPONENT_STATE() -> ComponentState {
@@ -392,22 +413,40 @@ fn test_internal_update_stream_balance_gives_same_result_even_after_many_calls()
     // ensure saved balance is expected balance
     assert_eq!(strealm_mock_cs.strealm.StRealm_staker_reward_balance.read(owner), expected_balance);
 }
-// #[test]
-// #[feature("safe_dispatcher")]
-// fn test_cannot_increase_balance_with_zero_value() {
-//     let contract_address = deploy_contract("HelloStarknet");
-
-//     let safe_dispatcher = IHelloStarknetSafeDispatcher { contract_address };
-
-//     let balance_before = safe_dispatcher.get_balance().unwrap();
-//     assert(balance_before == 0, 'Invalid balance');
-
-//     match safe_dispatcher.increase_balance(0) {
-//         Result::Ok(_) => core::panic_with_felt252('Should have panicked'),
-//         Result::Err(panic_data) => {
-//             assert(*panic_data.at(0) == 'Amount cannot be 0', *panic_data.at(0));
-//         }
-//     };
-// }
 
 
+#[test]
+fn test_internal_reward_claim() {
+    let mut erc20_mock_dispatcher = ERC20_MOCK();
+    let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
+    ///
+    ///  start setup
+    /// 
+
+    // use erc20 mock as reward token
+    strealm_mock_cs.strealm._update_reward_token(erc20_mock_dispatcher.contract_address);
+
+    // give test address allowance to spend reward token
+    start_prank(CheatTarget::One(erc20_mock_dispatcher.contract_address), REWARD_PAYER());
+    erc20_mock_dispatcher.approve(test_address(), BoundedInt::max());
+    stop_prank(CheatTarget::One(erc20_mock_dispatcher.contract_address));
+
+    // ensure owner's erc20 reward balance is 0
+    let owner = contract_address_const::<'ownerx'>();
+    assert_eq!(erc20_mock_dispatcher.balance_of(owner), 0);
+
+    // add to the owner's reward balance
+    let reward = 156_000;
+    strealm_mock_cs.strealm.StRealm_staker_reward_balance.write(owner, reward);
+
+    ///
+    ///  end  setup
+    /// 
+
+    // make claim
+    strealm_mock_cs.strealm._reward_claim(owner);
+
+    // ensure internal reward balance is cleared
+    assert_eq!(strealm_mock_cs.strealm.StRealm_staker_reward_balance.read(owner), 0);
+    assert_eq!(erc20_mock_dispatcher.balance_of(owner), reward);
+}

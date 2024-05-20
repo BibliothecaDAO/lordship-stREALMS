@@ -12,6 +12,7 @@ mod tests {
         mod test_strealm;
     }
     mod mocks {
+        mod erc20_mock;
         mod strealm_mock;
     }
 }
