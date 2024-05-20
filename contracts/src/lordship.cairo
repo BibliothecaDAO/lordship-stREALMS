@@ -16,6 +16,17 @@
 const MINTER_ROLE: felt252 = selector!("MINTER_ROLE");
 const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 
+#[starknet::interface]
+trait IERC721Minter<TState> {
+    fn safe_mint(
+        ref self: TState,
+        recipient: starknet::ContractAddress,
+        token_id: u256,
+        data: Span<felt252>,
+    );
+}
+
+
 #[starknet::contract]
 mod Lordship {
     use openzeppelin::access::accesscontrol::AccessControlComponent;
@@ -34,6 +45,7 @@ mod Lordship {
     use strealm::components::strealm::StRealmComponent::InternalTrait as StRealmInternalTrait;
     use strealm::components::strealm::StRealmComponent;
     use super::{MINTER_ROLE, UPGRADER_ROLE};
+    use super::{IERC721Minter};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -139,10 +151,11 @@ mod Lordship {
             token_id: u256,
             auth: ContractAddress
         ) {
-            let owner_before_transfer: ContractAddress = self.owner_of(token_id);
+
+            let owner_before_transfer: ContractAddress = self._owner_of(token_id);
             let owner_after_transfer: ContractAddress = to;
 
-            // claim stream for both sender and receiver
+            // updated streamed reward balance for both sender and receiver
             let mut strealm_component = get_dep_component_mut!(ref self, StRealm);
             strealm_component._update_stream_balance(owner_before_transfer);
             strealm_component._update_stream_balance(owner_after_transfer);
@@ -208,10 +221,8 @@ mod Lordship {
     }
 
 
-    #[generate_trait]
-    #[abi(per_item)]
-    impl ERC721MinterImpl of ERC721MinterTrait {
-        #[external(v0)]
+    #[abi(embed_v0)]
+    impl ERC721MinterImpl of IERC721Minter<ContractState> {
         fn safe_mint(
             ref self: ContractState,
             recipient: ContractAddress,
