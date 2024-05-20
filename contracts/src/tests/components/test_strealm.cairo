@@ -1,7 +1,7 @@
-use core::starknet::storage::StorageMapMemberAccessTrait;
 use core::debug::PrintTrait;
 use core::integer::BoundedInt;
 use core::serde::Serde;
+use core::starknet::storage::StorageMapMemberAccessTrait;
 use openzeppelin::access::accesscontrol::accesscontrol::AccessControlComponent::InternalTrait as AccessComponentInternalTrait;
 use openzeppelin::token::erc721::erc721::ERC721Component::InternalTrait as ERC721InternalTrait;
 
@@ -110,7 +110,6 @@ fn test_internal_update_flow_rate() {
 
 #[test]
 fn test_internal_update_reward_token() {
-
     let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
 
     let new_reward_token_address = contract_address_const::<'new_reward_token_address'>();
@@ -134,7 +133,9 @@ fn test_internal_end_latest_flow() {
     let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
     // ensure that latest flow id is 1
     assert_eq!(strealm_mock_cs.strealm.get_latest_flow_id(), 1);
-    let latest_flow: Flow = strealm_mock_cs.strealm.get_flow(strealm_mock_cs.strealm.get_latest_flow_id());
+    let latest_flow: Flow = strealm_mock_cs
+        .strealm
+        .get_flow(strealm_mock_cs.strealm.get_latest_flow_id());
     assert_eq!(latest_flow.rate, FLOW_RATE());
     assert_eq!(latest_flow.end_at, BoundedInt::max());
 
@@ -142,7 +143,9 @@ fn test_internal_end_latest_flow() {
     strealm_mock_cs.strealm._end_latest_flow();
 
     // ensure new flow values are correct
-    let latest_flow: Flow = strealm_mock_cs.strealm.get_flow(strealm_mock_cs.strealm.get_latest_flow_id());
+    let latest_flow: Flow = strealm_mock_cs
+        .strealm
+        .get_flow(strealm_mock_cs.strealm.get_latest_flow_id());
     assert_eq!(latest_flow.rate, FLOW_RATE());
     assert_eq!(latest_flow.end_at, 0);
 }
@@ -153,7 +156,9 @@ fn test_internal_start_new_flow() {
     let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
     // ensure that latest flow id is 1
     assert_eq!(strealm_mock_cs.strealm.get_latest_flow_id(), 1);
-    let latest_flow: Flow = strealm_mock_cs.strealm.get_flow(strealm_mock_cs.strealm.get_latest_flow_id());
+    let latest_flow: Flow = strealm_mock_cs
+        .strealm
+        .get_flow(strealm_mock_cs.strealm.get_latest_flow_id());
     assert_eq!(latest_flow.rate, FLOW_RATE());
     assert_eq!(latest_flow.end_at, BoundedInt::max());
 
@@ -162,7 +167,9 @@ fn test_internal_start_new_flow() {
     strealm_mock_cs.strealm._start_new_flow(new_rate);
 
     // ensure new flow values are correct
-    let latest_flow: Flow = strealm_mock_cs.strealm.get_flow(strealm_mock_cs.strealm.get_latest_flow_id());
+    let latest_flow: Flow = strealm_mock_cs
+        .strealm
+        .get_flow(strealm_mock_cs.strealm.get_latest_flow_id());
     assert_eq!(latest_flow.rate, new_rate);
     assert_eq!(latest_flow.end_at, BoundedInt::max());
 }
@@ -172,7 +179,7 @@ fn test_internal_reset_stream() {
     let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
     // setup
     let owner: ContractAddress = contract_address_const::<'ownerx'>();
-    strealm_mock_cs.strealm.StRealm_streams.write(owner, Stream{start_at: 14, flow_id: 14});
+    strealm_mock_cs.strealm.StRealm_streams.write(owner, Stream { start_at: 14, flow_id: 14 });
 
     // reset stream
     strealm_mock_cs.strealm._reset_stream(owner);
@@ -181,7 +188,6 @@ fn test_internal_reset_stream() {
     let stream = strealm_mock_cs.strealm.get_stream(owner);
     assert_eq!(stream.start_at, 0);
     assert_eq!(stream.flow_id, strealm_mock_cs.strealm.get_latest_flow_id());
-    
 }
 
 
@@ -193,7 +199,9 @@ fn test_internal_reward_balance_with_active_flow() {
     ///  start setup
     /// 
     let owner: ContractAddress = contract_address_const::<'ownerx'>();
-    let stream: Stream = Stream {start_at: 1, flow_id: strealm_mock_cs.strealm.get_latest_flow_id()};
+    let stream: Stream = Stream {
+        start_at: 1, flow_id: strealm_mock_cs.strealm.get_latest_flow_id()
+    };
     strealm_mock_cs.strealm.StRealm_streams.write(owner, stream);
 
     // set give caller x nfts 
@@ -203,21 +211,19 @@ fn test_internal_reward_balance_with_active_flow() {
     ///
     ///  end  setup
     /// 
-    
+
     // move 40 seconds into the future
     let _40_seconds_later = stream.start_at + 40_u64;
     start_warp(CheatTarget::One(test_address()), _40_seconds_later);
 
     // get reward balance
-    let expected_balance 
-        = (_40_seconds_later.into() - stream.start_at.into()) 
-            * owner_nft_count.into() 
-                * FLOW_RATE();
+    let expected_balance = (_40_seconds_later.into() - stream.start_at.into())
+        * owner_nft_count.into()
+        * FLOW_RATE();
 
     // ensure actual balance is expected balance
     assert_eq!(strealm_mock_cs.strealm._reward_balance(owner), expected_balance);
 }
-
 
 
 #[test]
@@ -228,11 +234,13 @@ fn test_internal_reward_balance_with_inactive_flow() {
     ///
     ///  start setup
     /// 
-    
+
     let owner: ContractAddress = contract_address_const::<'ownerx'>();
-    let stream: Stream = Stream {start_at: 1, flow_id: strealm_mock_cs.strealm.get_latest_flow_id()};
+    let stream: Stream = Stream {
+        start_at: 1, flow_id: strealm_mock_cs.strealm.get_latest_flow_id()
+    };
     strealm_mock_cs.strealm.StRealm_streams.write(owner, stream);
-    
+
     // set give caller x nfts 
     let owner_nft_count = 2_u256;
     strealm_mock_cs.erc721.ERC721_balances.write(owner, owner_nft_count);
@@ -245,7 +253,6 @@ fn test_internal_reward_balance_with_inactive_flow() {
     let new_flow_rate = 3;
     strealm_mock_cs.strealm._update_flow_rate(new_flow_rate);
 
-
     ///
     ///  end setup
     /// 
@@ -254,18 +261,137 @@ fn test_internal_reward_balance_with_inactive_flow() {
     let _40_seconds_later = starknet::get_block_timestamp() + 40;
     start_warp(CheatTarget::One(test_address()), _40_seconds_later);
 
-
     // get reward balance which should have stopped the moment a new flow was made
-    let expected_balance 
-        = (_10_seconds_later.into() - stream.start_at.into()) 
-            * owner_nft_count.into() 
-                * FLOW_RATE();
+    let expected_balance = (_10_seconds_later.into() - stream.start_at.into())
+        * owner_nft_count.into()
+        * FLOW_RATE();
 
     // ensure actual balance is expected balance
     assert_eq!(strealm_mock_cs.strealm._reward_balance(owner), expected_balance);
 }
 
 
+#[test]
+fn test_internal_reward_balance_with_no_active_stream() {
+    // check that the computed reward balance is correct
+    let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
+
+    ///
+    ///  start setup
+    /// 
+
+    let owner: ContractAddress = contract_address_const::<'ownerx'>();
+
+    // set existing balance
+    let existing_balance = 11;
+    strealm_mock_cs.strealm.StRealm_staker_reward_balance.write(owner, existing_balance);
+
+    // set give caller x nfts 
+    let owner_nft_count = 2_u256;
+    strealm_mock_cs.erc721.ERC721_balances.write(owner, owner_nft_count);
+
+    // move 10 seconds into the future
+    let _10_seconds_later = 10;
+    start_warp(CheatTarget::One(test_address()), _10_seconds_later);
+
+    ///
+    ///  end setup
+    /// 
+
+    // ensure actual balance is expected balance
+    assert_eq!(strealm_mock_cs.strealm._reward_balance(owner), existing_balance);
+}
+
+
+#[test]
+fn test_internal_update_stream_balance() {
+    // check that the saved reward balance is correct
+
+    let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
+    ///
+    ///  start setup
+    /// 
+    let owner: ContractAddress = contract_address_const::<'ownerx'>();
+    let stream: Stream = Stream {
+        start_at: 1, flow_id: strealm_mock_cs.strealm.get_latest_flow_id()
+    };
+    strealm_mock_cs.strealm.StRealm_streams.write(owner, stream);
+
+    // set give caller x nfts 
+    let owner_nft_count = 2_u256;
+    strealm_mock_cs.erc721.ERC721_balances.write(owner, owner_nft_count);
+
+    ///
+    ///  end  setup
+    /// 
+
+    // move 40 seconds into the future
+    let _40_seconds_later = stream.start_at + 40_u64;
+    start_warp(CheatTarget::One(test_address()), _40_seconds_later);
+    // update stream balance
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+    let expected_balance = (_40_seconds_later.into() - stream.start_at.into())
+        * owner_nft_count.into()
+        * FLOW_RATE();
+
+    // ensure saved balance is expected balance
+    assert_eq!(strealm_mock_cs.strealm.StRealm_staker_reward_balance.read(owner), expected_balance);
+
+    // move another 40 seconds into the future  i.e at the 81st second
+    let _80_seconds_later = starknet::get_block_timestamp() + 40_u64;
+    start_warp(CheatTarget::One(test_address()), _80_seconds_later);
+    // update stream balance again
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+    let expected_balance = (_80_seconds_later.into() - stream.start_at.into())
+        * owner_nft_count.into()
+        * FLOW_RATE();
+    // ensure saved balance is expected balance
+    assert_eq!(strealm_mock_cs.strealm.StRealm_staker_reward_balance.read(owner), expected_balance);
+}
+
+
+#[test]
+fn test_internal_update_stream_balance_gives_same_result_even_after_many_calls() {
+    // ensure multiple calls does not add to balance
+
+    let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
+    ///
+    ///  start setup
+    /// 
+    let owner: ContractAddress = contract_address_const::<'ownerx'>();
+    let stream: Stream = Stream {
+        start_at: 1, flow_id: strealm_mock_cs.strealm.get_latest_flow_id()
+    };
+    strealm_mock_cs.strealm.StRealm_streams.write(owner, stream);
+
+    // set give caller x nfts 
+    let owner_nft_count = 2_u256;
+    strealm_mock_cs.erc721.ERC721_balances.write(owner, owner_nft_count);
+
+    ///
+    ///  end  setup
+    /// 
+
+    // move 40 seconds into the future
+    let _40_seconds_later = stream.start_at + 40_u64;
+    start_warp(CheatTarget::One(test_address()), _40_seconds_later);
+    // update stream balance many times
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+    strealm_mock_cs.strealm._update_stream_balance(owner);
+
+    // expected balance should remain the same
+    let expected_balance = (_40_seconds_later.into() - stream.start_at.into())
+        * owner_nft_count.into()
+        * FLOW_RATE();
+
+    // ensure saved balance is expected balance
+    assert_eq!(strealm_mock_cs.strealm.StRealm_staker_reward_balance.read(owner), expected_balance);
+}
 // #[test]
 // #[feature("safe_dispatcher")]
 // fn test_cannot_increase_balance_with_zero_value() {
