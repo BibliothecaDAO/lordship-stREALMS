@@ -195,7 +195,7 @@ mod Lordship {
             } else {
                 if self.delegates(account).is_zero() {
                     // no current delegates
-                    strealm_component._reset_stream(account);
+                    strealm_component._restart_stream(account);
                 }
             }
         }
