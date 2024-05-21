@@ -6,6 +6,7 @@ trait IStRealm<TState> {
     fn get_flow(self: @TState, flow_id: u64) -> strealm_structs::Flow;
     fn get_latest_flow_id(self: @TState) -> u64;
     fn get_reward_balance(self: @TState) -> u256;
+    fn get_reward_balance_for(self: @TState, owner: starknet::ContractAddress) -> u256;
 
     fn reward_claim(ref self: TState);
     fn update_flow_rate(ref self: TState, new_rate: u256);
@@ -147,6 +148,13 @@ mod StRealmComponent {
 
         fn get_reward_balance(self: @ComponentState<TContractState>) -> u256 {
             let (balance, _) = self._reward_balance(starknet::get_caller_address());
+            balance
+        }
+
+        fn get_reward_balance_for(
+            self: @ComponentState<TContractState>, owner: ContractAddress
+        ) -> u256 {
+            let (balance, _) = self._reward_balance(owner);
             balance
         }
 
