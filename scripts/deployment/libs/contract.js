@@ -13,7 +13,7 @@ const TARGET_PATH = path.join(
   "..",
   "..",
   "..",
-  "contracts",
+  "stRealms",
   "target",
   "release"
 );
