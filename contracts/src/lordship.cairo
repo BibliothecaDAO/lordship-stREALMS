@@ -17,7 +17,8 @@ const MINTER_ROLE: felt252 = selector!("MINTER_ROLE");
 const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 
 #[starknet::interface]
-trait IERC721Minter<TState> {
+trait IERC721MinterBurner<TState> {
+    fn burn(ref self: TState, token_id: u256);
     fn safe_mint(
         ref self: TState, recipient: starknet::ContractAddress, token_id: u256, data: Span<felt252>,
     );
@@ -41,7 +42,7 @@ mod Lordship {
     use strealm::components::erc721::extensions::ERC721VotesComponent;
     use strealm::components::strealm::StRealmComponent::InternalTrait as StRealmInternalTrait;
     use strealm::components::strealm::StRealmComponent;
-    use super::{IERC721Minter};
+    use super::{IERC721MinterBurner};
     use super::{MINTER_ROLE, UPGRADER_ROLE};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -121,7 +122,7 @@ mod Lordship {
     /// Required for hash computation.
     impl SNIP12MetadataImpl of SNIP12Metadata {
         fn name() -> felt252 {
-            'stRealm'
+            'stREALM'
         }
         fn version() -> felt252 {
             '1'
@@ -195,7 +196,7 @@ mod Lordship {
             } else {
                 if self.delegates(account).is_zero() {
                     // no current delegates
-                    strealm_component._reset_stream(account);
+                    strealm_component._restart_stream(account);
                 }
             }
         }
@@ -218,7 +219,12 @@ mod Lordship {
 
 
     #[abi(embed_v0)]
-    impl ERC721MinterImpl of IERC721Minter<ContractState> {
+    impl ERC721MinterBurnerImpl of IERC721MinterBurner<ContractState> {
+        fn burn(ref self: ContractState, token_id: u256) {
+            self.access_control.assert_only_role(MINTER_ROLE);
+            self.erc721._burn(token_id);
+        }
+
         fn safe_mint(
             ref self: ContractState,
             recipient: ContractAddress,

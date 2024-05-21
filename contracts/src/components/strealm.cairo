@@ -6,6 +6,7 @@ trait IStRealm<TState> {
     fn get_flow(self: @TState, flow_id: u64) -> strealm_structs::Flow;
     fn get_latest_flow_id(self: @TState) -> u64;
     fn get_reward_balance(self: @TState) -> u256;
+    fn get_reward_balance_for(self: @TState, owner: starknet::ContractAddress) -> u256;
 
     fn reward_claim(ref self: TState);
     fn update_flow_rate(ref self: TState, new_rate: u256);
@@ -146,7 +147,15 @@ mod StRealmComponent {
         }
 
         fn get_reward_balance(self: @ComponentState<TContractState>) -> u256 {
-            self._reward_balance(starknet::get_caller_address())
+            let (balance, _) = self._reward_balance(starknet::get_caller_address());
+            balance
+        }
+
+        fn get_reward_balance_for(
+            self: @ComponentState<TContractState>, owner: ContractAddress
+        ) -> u256 {
+            let (balance, _) = self._reward_balance(owner);
+            balance
         }
 
         fn get_reward_token(self: @ComponentState<TContractState>) -> ContractAddress {
@@ -259,7 +268,7 @@ mod StRealmComponent {
         }
 
 
-        fn _reset_stream(ref self: ComponentState<TContractState>, owner: ContractAddress) {
+        fn _restart_stream(ref self: ComponentState<TContractState>, owner: ContractAddress) {
             let stream = Stream {
                 start_at: starknet::get_block_timestamp(),
                 flow_id: self.StRealm_latest_flow_id.read()
@@ -273,11 +282,15 @@ mod StRealmComponent {
             }
         }
 
-        fn _reward_balance(self: @ComponentState<TContractState>, owner: ContractAddress) -> u256 {
+        fn _reward_balance(
+            self: @ComponentState<TContractState>, owner: ContractAddress
+        ) -> (u256, bool) {
             if owner.is_non_zero() {
                 let staker_reward_balance = self.StRealm_staker_reward_balance.read(owner);
                 let stream: Stream = self.StRealm_streams.read(owner);
-                if stream.flow_id.is_non_zero() && stream.start_at.is_non_zero() {
+                let owner_has_stream = stream.flow_id.is_non_zero()
+                    && stream.start_at.is_non_zero();
+                if owner_has_stream {
                     let flow: Flow = self.StRealm_flows.read(stream.flow_id);
                     let latest_flow_id: u64 = self.StRealm_latest_flow_id.read();
 
@@ -293,12 +306,12 @@ mod StRealmComponent {
                     let num_staked_realms = erc721_component.balance_of(owner);
                     let streamed_amount = num_staked_realms * stream_duration.into() * flow.rate;
 
-                    return staker_reward_balance + streamed_amount;
+                    return (staker_reward_balance + streamed_amount, owner_has_stream);
                 } else {
-                    staker_reward_balance
+                    (staker_reward_balance, false)
                 }
             } else {
-                0_u256
+                (0_u256, false)
             }
         }
 
@@ -308,12 +321,11 @@ mod StRealmComponent {
             ref self: ComponentState<TContractState>, owner: ContractAddress
         ) -> u256 {
             if owner.is_non_zero() {
-                let new_reward_balance = self._reward_balance(owner);
-                if new_reward_balance.is_non_zero() {
+                let (new_reward_balance, owner_has_stream) = self._reward_balance(owner);
+                if owner_has_stream {
                     self.StRealm_staker_reward_balance.write(owner, new_reward_balance);
+                    self._restart_stream(owner);
                 }
-                // reset stream
-                self._reset_stream(owner);
 
                 new_reward_balance
             } else {

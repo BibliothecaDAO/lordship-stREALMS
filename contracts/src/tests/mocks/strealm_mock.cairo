@@ -59,7 +59,13 @@ mod StRealmMock {
 
     #[generate_trait]
     #[abi(per_item)]
-    impl ERC721MinterImpl of ERC721MinterTrait {
+    impl ERC721MinterBurnerImpl of ERC721MinterBurnerTrait {
+        #[external(v0)]
+        fn burn(ref self: ContractState, token_id: u256) {
+            self.access_control.assert_only_role(MINTER_ROLE);
+            self.erc721._burn(token_id);
+        }
+
         #[external(v0)]
         fn safe_mint(
             ref self: ContractState,

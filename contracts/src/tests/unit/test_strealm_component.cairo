@@ -193,18 +193,20 @@ fn test_internal_start_new_flow() {
 }
 
 #[test]
-fn test_internal_reset_stream() {
+fn test_internal_restart_stream() {
     let mut strealm_mock_cs = STREALM_CONTRACT_STATE();
     // setup
     let owner: ContractAddress = contract_address_const::<'ownerx'>();
     strealm_mock_cs.strealm.StRealm_streams.write(owner, Stream { start_at: 14, flow_id: 14 });
 
     // reset stream
-    strealm_mock_cs.strealm._reset_stream(owner);
+    let block_timestamp = 400;
+    start_warp(CheatTarget::One(test_address()), block_timestamp);
+    strealm_mock_cs.strealm._restart_stream(owner);
 
     // ensure new stream values are correct
     let stream = strealm_mock_cs.strealm.get_stream(owner);
-    assert_eq!(stream.start_at, 0);
+    assert_eq!(stream.start_at, block_timestamp);
     assert_eq!(stream.flow_id, strealm_mock_cs.strealm.get_latest_flow_id());
 }
 
@@ -240,7 +242,9 @@ fn test_internal_reward_balance_with_active_flow() {
         * FLOW_RATE();
 
     // ensure actual balance is expected balance
-    assert_eq!(strealm_mock_cs.strealm._reward_balance(owner), expected_balance);
+    let (actual_balance, owner_has_stream) = strealm_mock_cs.strealm._reward_balance(owner);
+    assert_eq!(actual_balance, expected_balance);
+    assert_eq!(owner_has_stream, true);
 }
 
 
@@ -285,7 +289,9 @@ fn test_internal_reward_balance_with_inactive_flow() {
         * FLOW_RATE();
 
     // ensure actual balance is expected balance
-    assert_eq!(strealm_mock_cs.strealm._reward_balance(owner), expected_balance);
+    let (actual_balance, owner_has_stream) = strealm_mock_cs.strealm._reward_balance(owner);
+    assert_eq!(actual_balance, expected_balance);
+    assert_eq!(owner_has_stream, true);
 }
 
 
@@ -317,7 +323,9 @@ fn test_internal_reward_balance_with_no_active_stream() {
     /// 
 
     // ensure actual balance is expected balance
-    assert_eq!(strealm_mock_cs.strealm._reward_balance(owner), existing_balance);
+    let (actual_balance, owner_has_stream) = strealm_mock_cs.strealm._reward_balance(owner);
+    assert_eq!(actual_balance, existing_balance);
+    assert_eq!(owner_has_stream, false);
 }
 
 
