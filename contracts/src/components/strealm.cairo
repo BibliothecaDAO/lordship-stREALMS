@@ -282,11 +282,14 @@ mod StRealmComponent {
             }
         }
 
-        fn _reward_balance(self: @ComponentState<TContractState>, owner: ContractAddress) -> (u256, bool) {
+        fn _reward_balance(
+            self: @ComponentState<TContractState>, owner: ContractAddress
+        ) -> (u256, bool) {
             if owner.is_non_zero() {
                 let staker_reward_balance = self.StRealm_staker_reward_balance.read(owner);
                 let stream: Stream = self.StRealm_streams.read(owner);
-                let owner_has_stream = stream.flow_id.is_non_zero() && stream.start_at.is_non_zero();
+                let owner_has_stream = stream.flow_id.is_non_zero()
+                    && stream.start_at.is_non_zero();
                 if owner_has_stream {
                     let flow: Flow = self.StRealm_flows.read(stream.flow_id);
                     let latest_flow_id: u64 = self.StRealm_latest_flow_id.read();
