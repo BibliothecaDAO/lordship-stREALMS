@@ -2,6 +2,10 @@
 cache/
 out/
 node_modules
+*.code-workspace
+target
+.snfoundry_cache
+
 
 # Ignores development broadcast logs
 !/broadcast
