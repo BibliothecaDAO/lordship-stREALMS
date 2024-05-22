@@ -19,11 +19,11 @@ mod bridge {
         IOwnableDispatcher, IOwnableDispatcherTrait
     };
 
-    use starklane::interfaces::{IStarklane, 
+    use realms::interfaces::{IBridge, 
         IUpgradeable, IUpgradeableDispatcher, IUpgradeableDispatcherTrait, 
-        IStarklaneCollectionAdmin};
+        IBridgeCollectionAdmin};
     // events
-    use starklane::interfaces::{
+    use realms::interfaces::{
         DepositRequestInitiated,
         WithdrawRequestCompleted,
         CollectionDeployedFromL1,
@@ -32,13 +32,13 @@ mod bridge {
         CollectionWhiteListUpdated,
     };
 
-    use starklane::request::{
+    use realms::request::{
         Request,
         compute_request_header_v1,
         compute_request_hash,
         collection_type_from_header,
     };
-    use starklane::token::{
+    use realms::token::{
         interfaces::{
             IERC721Dispatcher, IERC721DispatcherTrait,
             IERC721BridgeableDispatcher, IERC721BridgeableDispatcherTrait,
@@ -119,7 +119,7 @@ mod bridge {
     ///
     /// # Arguments
     ///
-    /// `from_address` - L1 sender address, must be Starklane L1.
+    /// `from_address` - L1 sender address, must be Realms L1.
     /// `req` - The request containing tokens to bridge.
     ///
     /// TODO: isn't better to receive a raw Span<felt252>
@@ -198,7 +198,7 @@ mod bridge {
     }
 
     #[abi(embed_v0)]
-    impl BridgeImpl of IStarklane<ContractState> {
+    impl BridgeImpl of IBridge<ContractState> {
 
         fn get_l1_collection_address(self: @ContractState, address: ContractAddress) -> EthAddress {
             self.l2_to_l1_addresses.read(address)
@@ -234,8 +234,8 @@ mod bridge {
         /// * `collection_l2` - Address of the collection on L2.
         /// * `owner_l1` - Address of the owner on L1.
         /// * `tokens_ids` - Tokens to be bridged on L1.
-        /// * `use_withdraw_auto` - Tokens are automatically withdrawn on L1 using Starklane indexer.
-        /// * `use_deposit_burn_auto` - Tokens are automatically burnt on L2 once transferred using Starklane indexer.
+        /// * `use_withdraw_auto` - Tokens are automatically withdrawn on L1 using Realms indexer.
+        /// * `use_deposit_burn_auto` - Tokens are automatically burnt on L2 once transferred using Realms indexer.
         ///
         /// TODO: add new_owners, values and uris.
         /// TODO: better to use a struct than too much arguments? (DepositParams/DepositInputs/???)
@@ -365,7 +365,7 @@ mod bridge {
     }
 
     #[abi(embed_v0)]
-    impl BridgeCollectionAdminImpl of IStarklaneCollectionAdmin<ContractState> {
+    impl BridgeCollectionAdminImpl of IBridgeCollectionAdmin<ContractState> {
         fn collection_upgrade(ref self: ContractState, collection: ContractAddress, class_hash: ClassHash) {
             ensure_is_admin(@self);
             IUpgradeableDispatcher { contract_address: collection }

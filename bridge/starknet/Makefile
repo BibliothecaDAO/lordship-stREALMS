@@ -18,8 +18,8 @@ bold := "\\033[1m"
 shiny := "\\033[31m"
 normal := "\\033[0m"
 
-bridge_class_hash := $(shell starkli class-hash target/dev/starklane_bridge.sierra.json)
-erc721b_class_hash := $(shell starkli class-hash target/dev/starklane_erc721_bridgeable.sierra.json)
+bridge_class_hash := $(shell starkli class-hash target/dev/realms_bridge.sierra.json)
+erc721b_class_hash := $(shell starkli class-hash target/dev/realms_erc721_bridgeable.sierra.json)
 
 timestamp := $(shell date "+%d-%m-%Y_%H-%M-%S")
 logfile := logs/make_setup_local.txt
@@ -38,24 +38,24 @@ declare:
 	starkli declare $(contract) ${priv_key}
 	sleep 2
 
-# Starklane deploy
-starklane_deploy:
+# Realms deploy
+realms_deploy:
 	starkli deploy ${bridge_class_hash} "${ADMIN_ACCOUNT_ADDR}" "${BRIDGE_L1_ADDRESS}" ${erc721b_class_hash} ${priv_key}
 
-# Starklane upgrade with local version of starklane.
-starklane_upgrade_auto:
+# Realms upgrade with local version of realms.
+realms_upgrade_auto:
 	@printf "${bold}Ensure you don't forget the bridge argument:\n${normal}"
-	@echo "${shiny}usage: make starklane_upgrade_auto config=.yourconfig.env bridge=0x...\n${normal}"
+	@echo "${shiny}usage: make realms_upgrade_auto config=.yourconfig.env bridge=0x...\n${normal}"
 	scarb build
-	$(eval new_class_hash=$(shell starkli class-hash ./target/dev/starklane_bridge.sierra.json))
-	starkli declare ./target/dev/starklane_bridge.sierra.json ${priv_key}
+	$(eval new_class_hash=$(shell starkli class-hash ./target/dev/realms_bridge.sierra.json))
+	starkli declare ./target/dev/realms_bridge.sierra.json ${priv_key}
 	sleep 2
 	starkli invoke $(bridge) upgrade ${new_class_hash} ${priv_key}
 
 # Deposit tokens.
-starklane_deposit:
+realms_deposit:
 	@printf "${bold}Ensure you don't forget the bridge, collection, owner_l1, tokens argument, withdraw_auto:\n${normal}"
-	@echo "${shiny}usage: make starklane_deposit config=.yourconfig.env bridge=0x... collection=0x... owner_l1=0x... withdraw_auto=0 tokens=\"1 1 0\"\n${normal}"
+	@echo "${shiny}usage: make realms_deposit config=.yourconfig.env bridge=0x... collection=0x... owner_l1=0x... withdraw_auto=0 tokens=\"1 1 0\"\n${normal}"
 	$(eval salt=$(shell date +%s%N))
 	starkli invoke $(bridge) deposit_tokens ${salt} $(collection) $(owner_l1) $(tokens) $(withdraw_auto) 0 ${priv_key}
 	sleep 2
@@ -67,16 +67,16 @@ erc721b_deploy:
 	@echo "${shiny}usage: make erc721b_deploy config=.yourconfig.env name=abcd symbol=SYM bridge=0x...\n${normal}"
 	starkli deploy ${erc721b_class_hash} 1 str:$(name) 1 str:$(symbol) $(bridge) ${ADMIN_ACCOUNT_ADDR} ${priv_key}
 
-# Starklane local setup.
+# Realms local setup.
 # Use a salt to ensure fixed addresses waiting for starkli address book.
-starklane_local_setup:
+realms_local_setup:
 	-mkdir -p logs
 	scarb build
 
 	# Declaring contracts
-	starkli declare ./target/dev/starklane_erc721_bridgeable.sierra.json ${priv_key}
+	starkli declare ./target/dev/realms_erc721_bridgeable.sierra.json ${priv_key}
 	sleep 2
-	starkli declare ./target/dev/starklane_bridge.sierra.json ${priv_key}
+	starkli declare ./target/dev/realms_bridge.sierra.json ${priv_key}
 	sleep 2
 	# Deploying Bridge
 	script -q -f -c "starkli deploy --salt 0x1234 ${bridge_class_hash} "${ADMIN_ACCOUNT_ADDR}" "${BRIDGE_L1_ADDRESS}" ${erc721b_class_hash} ${priv_key}" logs/a.txt

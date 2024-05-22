@@ -8,59 +8,63 @@ import "starknet/IStarknetMessaging.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
- @title Starklane state.
+ @title Realms state.
 */
-contract StarklaneState is Ownable {
+contract RealmsState is Ownable {
 
     // StarknetCore.
     IStarknetMessaging _starknetCoreAddress;
 
-    // Starklane L2 address for messaging.
-    snaddress _starklaneL2Address;
+    // Realms L2 address for messaging.
+    snaddress _realmsBridgeL2Address;
 
     // Bridge L2 selector to deposit token from L1.
-    felt252 _starklaneL2Selector;
+    felt252 _realmsBridgeL2Selector;
+
+    // realms ERC721 contract address
+    address _realmContractAddress;
+
 
     /**
-       @notice Retrieves info about Starklane L2 mapping.
+       @notice Retrieves info about Realms L2 mapping.
 
-       @return (starklane L2 address, starklane L2 selector).
+       @return (realms L2 address, realms L2 selector).
     */
     function l2Info()
         external
         view
         returns (snaddress, felt252)
     {
-        return (_starklaneL2Address, _starklaneL2Selector);
+        return (_realmsBridgeL2Address, _realmsBridgeL2Selector);
     }
 
     /**
-       @notice Sets Starklane L2 address.
+       @notice Sets Realms L2 address.
 
-       @param l2Address Starklane L2 address.
+       @param l2Address Realms L2 address.
     */
-    function setStarklaneL2Address(
+    function setRealmsBridgeL2Address(
         uint256 l2Address
     )
         public
         onlyOwner
     {
-        _starklaneL2Address = Cairo.snaddressWrap(l2Address);
+        _realmsBridgeL2Address = Cairo.snaddressWrap(l2Address);
     }
 
     /**
-       @notice Sets Starklane L2 selector of Starklane L2 contract to be
+       @notice Sets Realms L2 selector of Realms L2 contract to be
        called when a message arrives into Starknet.
 
-       @param l2Selector Starklane L2 selector.
+       @param l2Selector Realms L2 selector.
     */
-    function setStarklaneL2Selector(
+    function setRealmsBridgeL2Selector(
         uint256 l2Selector
     )
         public
         onlyOwner
     {
-        _starklaneL2Selector = Cairo.felt252Wrap(l2Selector);
+        _realmsBridgeL2Selector = Cairo.felt252Wrap(l2Selector);
     }
 
 

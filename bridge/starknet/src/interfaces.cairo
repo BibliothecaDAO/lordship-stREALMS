@@ -1,9 +1,9 @@
 use array::{SpanTrait};
 use starknet::{ClassHash, ContractAddress, EthAddress};
-use starklane::request::Request;
+use realms::request::Request;
 
 #[starknet::interface]
-trait IStarklane<T> {
+trait IBridge<T> {
 
     fn deposit_tokens(
         ref self: T,
@@ -43,7 +43,7 @@ trait IUpgradeable<T> {
 }
 
 #[starknet::interface]
-trait IStarklaneCollectionAdmin<T> {
+trait IBridgeCollectionAdmin<T> {
     // try to upgrade the given collection with given class_hash
     fn collection_upgrade(ref self: T, collection: ContractAddress, class_hash: ClassHash);
 

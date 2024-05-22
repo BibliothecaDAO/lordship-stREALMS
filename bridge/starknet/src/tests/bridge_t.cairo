@@ -22,21 +22,21 @@ mod tests {
     };
     
     use starknet::{ContractAddress, ClassHash, EthAddress};
-    use starklane::{
+    use realms::{
         request::{Request, compute_request_hash},
-        interfaces::{IStarklaneDispatcher, IStarklaneDispatcherTrait, 
+        interfaces::{IBridgeDispatcher, IBridgeDispatcherTrait, 
                     IUpgradeableDispatcher, IUpgradeableDispatcherTrait,
-                    IStarklaneCollectionAdminDispatcher, IStarklaneCollectionAdminDispatcherTrait,
+                    IBridgeCollectionAdminDispatcher, IBridgeCollectionAdminDispatcherTrait,
                     },
     };
-    use starklane::token::{
+    use realms::token::{
         interfaces::{
             IERC721Dispatcher, IERC721DispatcherTrait,
             IERC721BridgeableDispatcher, IERC721BridgeableDispatcherTrait,
             IERC721MintableDispatcher, IERC721MintableDispatcherTrait,
         },
     };
-    use starklane::bridge::bridge;
+    use realms::bridge::bridge;
 
     use snforge_std::{declare, ContractClass, ContractClassTrait, start_prank, stop_prank, CheatTarget, L1Handler, get_class_hash, spy_events, SpyOn};
 
@@ -48,8 +48,8 @@ mod tests {
         erc721_class: ClassHash,
     }
 
-    /// Deploys Starklane.
-    fn deploy_starklane(
+    /// Deploys Realms.
+    fn deploy_realms(
         bridge_admin: ContractAddress,
         bridge_l1_address: EthAddress,
         erc721_bridgeable_class: ClassHash,
@@ -65,7 +65,7 @@ mod tests {
 
         // enable bridge for tests
         start_prank(CheatTarget::One(bridge_address), bridge_admin);
-        IStarklaneDispatcher { contract_address: bridge_address }.enable(true);
+        IBridgeDispatcher { contract_address: bridge_address }.enable(true);
         stop_prank(CheatTarget::One(bridge_address));
         bridge_address
     }
@@ -99,10 +99,10 @@ mod tests {
     ) -> BridgeDeployedConfig {
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let collection_l2: ContractAddress = 0x0.try_into().unwrap();
 
@@ -128,7 +128,7 @@ mod tests {
         };
 
         l1_handler.execute().unwrap();
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
 
         // Deserialize the request and check some expected values.
         let mut sp = buf.span();
@@ -161,12 +161,12 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let COLLECTION_OWNER = starknet::contract_address_const::<'collection owner'>();
         let OWNER_L1 = EthAddress { address: 'owner_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let erc721b_address = deploy_erc721b(
             erc721b_contract_class,
@@ -180,7 +180,7 @@ mod tests {
 
         mint_range(erc721b_address, COLLECTION_OWNER, COLLECTION_OWNER, 0, 10);
 
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
 
         start_prank(CheatTarget::One(erc721b_address), COLLECTION_OWNER);
         erc721.set_approval_for_all(bridge_address, true);
@@ -249,11 +249,11 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let OWNER_L2 = starknet::contract_address_const::<'owner_l2'>();
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let collection_l1: EthAddress = 0xe0c.try_into().unwrap();
         let collection_l2: ContractAddress = 0x0.try_into().unwrap();
@@ -284,7 +284,7 @@ mod tests {
         let mut spy = spy_events(SpyOn::One(bridge_address));
 
         l1_handler.execute().unwrap();
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
 
         // Deserialize the request and check some expected values.
         let mut sp = buf.span();
@@ -317,11 +317,11 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let OWNER_L2 = starknet::contract_address_const::<'owner_l2'>();
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let collection_l1: EthAddress = 0xe0c.try_into().unwrap();
         let collection_l2: ContractAddress = 0x0.try_into().unwrap();
@@ -354,7 +354,7 @@ mod tests {
         let mut spy = spy_events(SpyOn::One(bridge_address));
 
         l1_handler.execute().unwrap();
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
 
         // Deserialize the request and check some expected values.
         let mut sp = buf.span();
@@ -390,12 +390,12 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let COLLECTION_OWNER = starknet::contract_address_const::<'collection owner'>();
         let OWNER_L1 = EthAddress { address: 'owner_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let erc721b_address = deploy_erc721b(
             erc721b_contract_class,
@@ -408,7 +408,7 @@ mod tests {
         let erc721 = IERC721Dispatcher { contract_address: erc721b_address };
         mint_range(erc721b_address, COLLECTION_OWNER, COLLECTION_OWNER, 0, 10);
 
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
 
         start_prank(CheatTarget::One(erc721b_address), COLLECTION_OWNER);
         erc721.set_approval_for_all(bridge_address, true);
@@ -460,11 +460,11 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let OWNER_L2 = starknet::contract_address_const::<'owner_l2'>();
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let collection_l1: EthAddress = 0xe0c.try_into().unwrap();
         let collection_l2: ContractAddress = 0x0.try_into().unwrap();
@@ -485,7 +485,7 @@ mod tests {
         let mut buf = array![];
         req.serialize(ref buf);
 
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
         bridge.enable_white_list(true);
         stop_prank(CheatTarget::One(bridge_address));
@@ -523,12 +523,12 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let COLLECTION_OWNER = starknet::contract_address_const::<'collection owner'>();
         let OWNER_L1 = EthAddress { address: 'owner_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let erc721b_address = deploy_erc721b(
             erc721b_contract_class,
@@ -542,7 +542,7 @@ mod tests {
 
         mint_range(erc721b_address, COLLECTION_OWNER, COLLECTION_OWNER, 0, 10);
 
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
         bridge.enable_white_list(true);
         stop_prank(CheatTarget::One(bridge_address));
@@ -567,12 +567,12 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let COLLECTION_OWNER = starknet::contract_address_const::<'collection owner'>();
         let OWNER_L1 = EthAddress { address: 'owner_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let erc721b_address = deploy_erc721b(
             erc721b_contract_class,
@@ -586,7 +586,7 @@ mod tests {
 
         mint_range(erc721b_address, COLLECTION_OWNER, COLLECTION_OWNER, 0, 10);
 
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
         bridge.enable_white_list(true);
         bridge.white_list_collection(erc721b_address, true);
@@ -611,11 +611,11 @@ mod tests {
     fn whitelist_collection_is_empty_by_default() {
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
         
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
         bridge.enable_white_list(true);
@@ -627,11 +627,11 @@ mod tests {
     fn whitelist_collection_is_updated_when_collection_is_added() {
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
         
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
         bridge.enable_white_list(true);
@@ -681,11 +681,11 @@ mod tests {
     fn whitelist_collection_is_updated_when_collection_is_removed() {
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
         
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
         bridge.enable_white_list(true);
@@ -775,11 +775,11 @@ mod tests {
     fn whitelist_collection_update_events() {
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
         
         let collection1 = starknet::contract_address_const::<'collection1'>();
         let collection2 = starknet::contract_address_const::<'collection2'>();
@@ -837,12 +837,12 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let COLLECTION_OWNER = starknet::contract_address_const::<'collection owner'>();
         let OWNER_L1 = EthAddress { address: 'owner_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let erc721b_address = deploy_erc721b(
             erc721b_contract_class,
@@ -854,7 +854,7 @@ mod tests {
 
         mint_range(erc721b_address, COLLECTION_OWNER, COLLECTION_OWNER, 0, 10);
 
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
         bridge.enable(false);
         stop_prank(CheatTarget::One(bridge_address));
@@ -876,11 +876,11 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address};
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge = IBridgeDispatcher { contract_address: bridge_address};
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
         bridge.enable(true);
         assert!(bridge.is_enabled());
@@ -895,13 +895,13 @@ mod tests {
         // Need to declare here to get the class hash before deploy anything.
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let alice = starknet::contract_address_const::<'alice'>();
 
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
         start_prank(CheatTarget::One(bridge_address), alice);
-        IStarklaneDispatcher { contract_address: bridge_address }.enable(true);
+        IBridgeDispatcher { contract_address: bridge_address }.enable(true);
         stop_prank(CheatTarget::One(bridge_address));        
     }
 
@@ -909,9 +909,9 @@ mod tests {
     fn upgrade_as_admin() {
        let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
 
         let mut spy = spy_events(SpyOn::One(bridge_address));
 
@@ -939,9 +939,9 @@ mod tests {
     fn upgrade_as_not_admin() {
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
-        let bridge_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
+        let bridge_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
         let bridge = IUpgradeableDispatcher { contract_address: bridge_address };
         let alice = starknet::contract_address_const::<'alice'>();
 
@@ -954,10 +954,10 @@ mod tests {
     fn support_two_step_transfer_ownership() {
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let ALICE = starknet::contract_address_const::<'alice'>();
-        let contract_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let contract_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
         let ownable = IOwnableTwoStepDispatcher { contract_address};
 
         assert_eq!(ownable.owner(), BRIDGE_ADMIN, "bad owner");
@@ -978,10 +978,10 @@ mod tests {
     fn should_panic_transfer_not_owner() {
         let erc721b_contract_class = declare("erc721_bridgeable");
 
-        let BRIDGE_ADMIN = starknet::contract_address_const::<'starklane'>();
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_ADMIN = starknet::contract_address_const::<'realms'>();
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let ALICE = starknet::contract_address_const::<'alice'>();
-        let contract_address = deploy_starklane(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
+        let contract_address = deploy_realms(BRIDGE_ADMIN, BRIDGE_L1, erc721b_contract_class.class_hash);
         let ownable = IOwnableTwoStepDispatcher { contract_address};
 
         assert_eq!(ownable.owner(), BRIDGE_ADMIN, "bad owner");
@@ -992,7 +992,7 @@ mod tests {
 
     #[test]
     fn collection_upgrade_as_admin() {
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let OWNER_L1: EthAddress = 0xe00.try_into().unwrap();
         let OWNER_L2 = starknet::contract_address_const::<'owner_l2'>();
         let COLLECTION_L1: EthAddress = 0xe0c.try_into().unwrap();
@@ -1007,14 +1007,14 @@ mod tests {
         let bridge_address = bridge_deployed_config.bridge;
         let erc721b_class = bridge_deployed_config.erc721_class;
 
-        let bridge = IStarklaneDispatcher { contract_address: bridge_address };
+        let bridge = IBridgeDispatcher { contract_address: bridge_address };
 
         let deployed_address = bridge.get_l2_collection_address(COLLECTION_L1.into());
         assert!(!deployed_address.is_zero(), "Expected deployed erc721");
         assert!(get_class_hash(deployed_address) == erc721b_class, "Expected class hash");
 
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
-        IStarklaneCollectionAdminDispatcher { contract_address: bridge_address}.collection_upgrade(deployed_address, get_class_hash(bridge_address));
+        IBridgeCollectionAdminDispatcher { contract_address: bridge_address}.collection_upgrade(deployed_address, get_class_hash(bridge_address));
         stop_prank(CheatTarget::One(bridge_address));
         assert!(get_class_hash(deployed_address) == get_class_hash(bridge_address), "Class hash not updated");
     }
@@ -1022,7 +1022,7 @@ mod tests {
 
     #[test]
     fn collection_transfer_ownership_as_admin() {
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let OWNER_L1: EthAddress = 0xe00.try_into().unwrap();
         let OWNER_L2 = starknet::contract_address_const::<'owner_l2'>();
         let COLLECTION_L1: EthAddress = 0xe0c.try_into().unwrap();
@@ -1043,7 +1043,7 @@ mod tests {
         let ALICE = starknet::contract_address_const::<'alice'>();
         
         start_prank(CheatTarget::One(bridge_address), BRIDGE_ADMIN);
-        IStarklaneCollectionAdminDispatcher { contract_address: bridge_address}.collection_transfer_ownership(erc721b, ALICE);
+        IBridgeCollectionAdminDispatcher { contract_address: bridge_address}.collection_transfer_ownership(erc721b, ALICE);
         stop_prank(CheatTarget::One(bridge_address));
 
         assert_eq!(ownable.owner(), bridge_address, "Wrong owner");
@@ -1058,7 +1058,7 @@ mod tests {
     #[test]
     #[should_panic(expected: ('Caller is not the owner',))]
     fn collection_transfer_ownership_as_not_admin() {
-        let BRIDGE_L1 = EthAddress { address: 'starklane_l1' };
+        let BRIDGE_L1 = EthAddress { address: 'realms_l1' };
         let OWNER_L1: EthAddress = 0xe00.try_into().unwrap();
         let OWNER_L2 = starknet::contract_address_const::<'owner_l2'>();
         let COLLECTION_L1: EthAddress = 0xe0c.try_into().unwrap();
@@ -1076,7 +1076,7 @@ mod tests {
         let ALICE = starknet::contract_address_const::<'alice'>();
         
         start_prank(CheatTarget::One(bridge_address), OWNER_L2);
-        IStarklaneCollectionAdminDispatcher { contract_address: bridge_address}.collection_transfer_ownership(erc721b, ALICE);
+        IBridgeCollectionAdminDispatcher { contract_address: bridge_address}.collection_transfer_ownership(erc721b, ALICE);
         stop_prank(CheatTarget::One(bridge_address));
     }
     

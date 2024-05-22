@@ -8,7 +8,7 @@ use starknet::{ContractAddress, ClassHash, EthAddress};
 use starknet::contract_address::ContractAddressZeroable;
 use starknet::eth_address::EthAddressZeroable;
 use super::interfaces::{IERC721Dispatcher, IERC721DispatcherTrait};
-use starklane::byte_array_extra::SpanFeltTryIntoByteArray;
+use realms::byte_array_extra::SpanFeltTryIntoByteArray;
 
 #[derive(Drop, PartialEq)]
 enum CollectionType {

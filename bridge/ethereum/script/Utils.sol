@@ -10,10 +10,10 @@ struct Config {
     uint256 deployerPrivateKey;
 
     address starknetCoreAddress;
-    address starklaneL1ProxyAddress;
+    address realmsL1ProxyAddress;
 
-    uint256 starklaneL2Address;
-    uint256 starklaneL2Selector;
+    uint256 realmsL2Address;
+    uint256 realmsL2Selector;
 }
 
 library Utils {
@@ -30,10 +30,10 @@ library Utils {
             deployerPrivateKey: vm.envUint("ACCOUNT_PRIVATE_KEY"),
 
             starknetCoreAddress: vm.envAddress("STARKNET_CORE_L1_ADDRESS"),
-            starklaneL1ProxyAddress: vm.envAddress("STARKLANE_L1_PROXY_ADDRESS"),
+            realmsL1ProxyAddress: vm.envAddress("REALMS_L1_PROXY_ADDRESS"),
 
-            starklaneL2Address: vm.envUint("STARKLANE_L2_ADDRESS"),
-            starklaneL2Selector: vm.envUint("STARKLANE_L2_SELECTOR")
+            realmsL2Address: vm.envUint("REALMS_L2_ADDRESS"),
+            realmsL2Selector: vm.envUint("REALMS_L2_SELECTOR")
             });
     }
 

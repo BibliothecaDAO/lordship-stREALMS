@@ -8,7 +8,7 @@ use starknet::{ContractAddress, EthAddress};
 use poseidon::poseidon_hash_span;
 use keccak::{keccak_u256s_be_inputs, keccak_u256s_le_inputs};
 
-use starklane::token::collection_manager::CollectionType;
+use realms::token::collection_manager::CollectionType;
 
 // Byte 1 of the header.
 const HEADER_V1: u256 = 0x01;
@@ -232,7 +232,7 @@ mod tests {
         contract_req_test, IContractRequestDispatcher, IContractRequestDispatcherTrait,
     };
 
-    use starklane::token::collection_manager::CollectionType;
+    use realms::token::collection_manager::CollectionType;
 
     use snforge_std::{declare, ContractClassTrait};
 

@@ -11,38 +11,38 @@ sgr0 := $(shell tput sgr0)
 
 # TODO: for upgrades, check how to force proxy arg.
 
-# Starklane local setup.
-starklane_local_setup:
+# RealmsBridge local setup.
+realms_bridge_local_setup:
 	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/LocalTesting.s.sol:LocalSetup
 
-# Starklane deposit tokens
-starklane_deposit:
+# RealmsBridge deposit tokens
+realms_bridge_deposit:
 	@printf "$(bold)Ensure you don't forget the proxy argument:\n"
-	@echo "usage: make starklane_deposit config=.yourconfig.env proxy=0x1234"
+	@echo "usage: make realms_bridge_deposit config=.yourconfig.env proxy=0x1234"
 	@printf "$(sgr0)\n"
-	export STARKLANE_L1_PROXY_ADDRESS=$(proxy) && \
-	forge script --broadcast  --rpc-url ${ETH_RPC_URL} --sender ${ACCOUNT_ADDRESS} script/Starklane.s.sol:Deposit
+	export REALMS_L1_PROXY_ADDRESS=$(proxy) && \
+	forge script --broadcast  --rpc-url ${ETH_RPC_URL} --sender ${ACCOUNT_ADDRESS} script/RealmsBridge.s.sol:Deposit
 
-# Starklane withdraw tokens
-starklane_withdraw:
+# RealmsBridge withdraw tokens
+realms_bridge_withdraw:
 	@printf "$(bold)Ensure you don't forget the proxy argument:\n"
-	@echo "usage: make starklane_withdraw config=.yourconfig.env proxy=0x1234"
+	@echo "usage: make realms_bridge_withdraw config=.yourconfig.env proxy=0x1234"
 	@printf "$(sgr0)\n"
-	export STARKLANE_L1_PROXY_ADDRESS=$(proxy) && \
-	forge script --broadcast  --rpc-url ${ETH_RPC_URL} --sender ${ACCOUNT_ADDRESS} script/Starklane.s.sol:WithdrawSN
+	export REALMS_L1_PROXY_ADDRESS=$(proxy) && \
+	forge script --broadcast  --rpc-url ${ETH_RPC_URL} --sender ${ACCOUNT_ADDRESS} script/RealmsBridge.s.sol:WithdrawSN
 
-# Starklane deploy impl + proxy.
-starklane_deploy:
-	export STARKLANE_L1_PROXY_ADDRESS=0x0000000000000000000000000000000000000000 && \
-	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Starklane.s.sol:Deploy
+# RealmsBridge deploy impl + proxy.
+realms_bridge_deploy:
+	export REALMS_L1_PROXY_ADDRESS=0x0000000000000000000000000000000000000000 && \
+	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/RealmsBridge.s.sol:Deploy
 
-# Starklane upgrade.
-starklane_upgrade:
+# RealmsBridge upgrade.
+realms_bridge_upgrade:
 	@printf "$(bold)Ensure you don't forget the proxy argument:\n"
-	@echo "usage: make starklane_upgrade config=.yourconfig.env proxy=0x1234"
+	@echo "usage: make realms_bridge_upgrade config=.yourconfig.env proxy=0x1234"
 	@printf "$(sgr0)\n"
-	export STARKLANE_L1_PROXY_ADDRESS=$(proxy) && \
-	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Starklane.s.sol:Deploy
+	export REALMS_L1_PROXY_ADDRESS=$(proxy) && \
+	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/RealmsBridge.s.sol:Deploy
 
 # ERC721Bridgeable deploy impl + proxy.
 erc721_deploy:

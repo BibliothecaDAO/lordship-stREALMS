@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.0;
 
-interface IStarklaneEvent {
+interface IBridgeEvent {
 
     /**
        @notice Request initiated on L1.
     */
     event DepositRequestInitiated(
         uint256 indexed hash,
-        uint256 block_timestamp,
+        uint256 blockTimestamp,
         uint256[] reqContent
     );
 
@@ -18,7 +18,7 @@ interface IStarklaneEvent {
     */
     event WithdrawRequestCompleted(
         uint256 indexed hash,
-        uint256 block_timestamp,
+        uint256 blockTimestamp,
         uint256[] reqContent
     );
 
@@ -27,7 +27,7 @@ interface IStarklaneEvent {
     */
     event CancelRequestStarted(
         uint256 indexed hash,
-        uint256 block_timestamp
+        uint256 blockTimestamp
     );
 
     /**
@@ -35,29 +35,7 @@ interface IStarklaneEvent {
     */
     event CancelRequestCompleted(
         uint256 indexed hash,
-        uint256 block_timestamp
+        uint256 blockTimestamp
     );
 
-    /**
-        @notice White list for deposit.
-     */
-    event WhiteListUpdated(
-        bool enable
-    );
-
-    /**
-        @notice White list status updated for collection.
-     */
-    event CollectionWhiteListUpdated(
-        address indexed collection,
-        bool enable
-    );
-
-    /**
-        @notice L1 L2 collection mapping updated
-     */
-    event L1L2CollectionMappingUpdated(
-        address indexed colllectionL1,
-        uint256 indexed collectionL2
-    );
 }

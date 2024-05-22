@@ -1,6 +1,6 @@
-# Starklane: Ethererum.
+# Realms Bridge: Ethererum.
 
-Starklane, bridge for NTFs.
+Realms Bridge, bridge for NTFs.
 
 ## Dev
 

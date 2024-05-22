@@ -9,8 +9,8 @@ mod erc721_bridgeable {
     use openzeppelin::token::erc721::ERC721Component;
     use openzeppelin::access::ownable::OwnableComponent;
 
-    use starklane::token::interfaces::{IERC721Bridgeable, IERC721Mintable, IERC721Uri};
-    use starklane::interfaces::IUpgradeable;
+    use realms::token::interfaces::{IERC721Bridgeable, IERC721Mintable, IERC721Uri};
+    use realms::interfaces::IUpgradeable;
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -182,13 +182,13 @@ mod tests {
         IOwnableTwoStepDispatcher, IOwnableTwoStepDispatcherTrait
     };
 
-    use starklane::token::interfaces::{
+    use realms::token::interfaces::{
         IERC721BridgeableDispatcher, IERC721BridgeableDispatcherTrait,
         IERC721Dispatcher, IERC721DispatcherTrait,
         IERC721MintableDispatcher, IERC721MintableDispatcherTrait,
         IERC721UriDispatcher, IERC721UriDispatcherTrait,
     };
-    use starklane::token::collection_manager;
+    use realms::token::collection_manager;
 
     use debug::PrintTrait;
     use serde::Serde;
