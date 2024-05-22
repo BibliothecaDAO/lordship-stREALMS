@@ -1,14 +1,8 @@
 ///! Request to bridge tokens.
 
-use serde::Serde;
-use traits::{Into, TryInto};
-use option::OptionTrait;
-use array::{ArrayTrait, SpanTrait};
 use starknet::{ContractAddress, EthAddress};
-use poseidon::poseidon_hash_span;
 use keccak::{keccak_u256s_be_inputs, keccak_u256s_le_inputs};
 
-use realms::token::collection_manager::CollectionType;
 
 #[derive(Serde, Drop)]
 struct Request {
