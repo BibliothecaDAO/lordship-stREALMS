@@ -1,4 +1,4 @@
-name: Test stRealms contracts
+name: StRealms Contracts Workflow
 
 on:
   push:

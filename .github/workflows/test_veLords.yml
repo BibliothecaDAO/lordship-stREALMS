@@ -1,4 +1,4 @@
-name: Test veLords contracts
+name: VeLords Contracts Workflow
 
 on:
   push:
