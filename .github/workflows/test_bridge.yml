@@ -49,7 +49,7 @@ jobs:
       - name: Run Forge build
         run: |
           forge --version
-          forge install --root bridge/ethereum/ &&forge build --sizes --root bridge/ethereum/
+          forge build --sizes --root bridge/ethereum/
         id: build
 
       - name: Run Forge tests
