@@ -5,9 +5,9 @@ mod dlords_reward_pool {
     use core::cmp::max;
     use core::integer::BoundedInt;
     use core::num::traits::Zero;
+    use lordship::interfaces::IDLordsRewardPool::IDLordsRewardPool;
     use lordship::interfaces::IERC20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use lordship::interfaces::IVE::{IVEDispatcher, IVEDispatcherTrait};
-    use lordship::interfaces::IDLordsRewardPool::IDLordsRewardPool;
     use lordship::velords::Point;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::UpgradeableComponent;
@@ -35,10 +35,8 @@ mod dlords_reward_pool {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
-
         dlords: IERC20Dispatcher,
         velords: IVEDispatcher,
-
         // Epoch time when fee distribution starts
         start_time: u64,
         // Epoch when the last token checkpoint was made
@@ -90,7 +88,13 @@ mod dlords_reward_pool {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress, velords: ContractAddress, dlords: ContractAddress, start_time: u64) {
+    fn constructor(
+        ref self: ContractState,
+        owner: ContractAddress,
+        velords: ContractAddress,
+        dlords: ContractAddress,
+        start_time: u64
+    ) {
         self.ownable.initializer(owner);
 
         self.velords.write(IVEDispatcher { contract_address: velords });
@@ -165,7 +169,10 @@ mod dlords_reward_pool {
         /// Update the token checkpoint.
         /// Calculates the total number of tokens to be distributed in a given week.
         fn checkpoint_token(ref self: ContractState) {
-            assert!(get_block_timestamp() > self.last_token_time.read() + TOKEN_CHECKPOINT_DEADLINE, "Token checkpoint deadline not yet reached");
+            assert!(
+                get_block_timestamp() > self.last_token_time.read() + TOKEN_CHECKPOINT_DEADLINE,
+                "Token checkpoint deadline not yet reached"
+            );
             self.checkpoint_token_internal();
         }
 
@@ -233,14 +240,18 @@ mod dlords_reward_pool {
                     if (since_last.is_zero() && now == t) {
                         self.tokens_per_week.write(this_week, tpw + to_distribute);
                     } else {
-                        self.tokens_per_week.write(this_week, tpw + to_distribute * (now - t).into() / since_last.into());
+                        self
+                            .tokens_per_week
+                            .write(this_week, tpw + to_distribute * (now - t).into() / since_last.into());
                     }
                     break;
                 } else {
                     if (since_last.is_zero() && next_week == t) {
                         self.tokens_per_week.write(this_week, tpw + to_distribute);
                     } else {
-                        self.tokens_per_week.write(this_week, tpw + to_distribute * (next_week - t).into() / since_last.into());
+                        self
+                            .tokens_per_week
+                            .write(this_week, tpw + to_distribute * (next_week - t).into() / since_last.into());
                     }
                 }
 
@@ -271,7 +282,9 @@ mod dlords_reward_pool {
                     // then make dt 0
                     dt = t.into() - point.ts.into();
                 }
-                let ve_supply: u128 = (point.bias - point.slope * dt).try_into().unwrap_or(0); // unwrap_or(0) is essentially a max(value, 0)
+                let ve_supply: u128 = (point.bias - point.slope * dt)
+                    .try_into()
+                    .unwrap_or(0); // unwrap_or(0) is essentially a max(value, 0)
                 self.ve_supply.write(t, ve_supply.into());
 
                 t += WEEK;
@@ -319,7 +332,10 @@ mod dlords_reward_pool {
 
             self.time_cursor_of.write(recipient, week_cursor);
 
-            self.emit(Claimed { recipient, amount: to_distribute, claim_epoch: week_cursor, max_epoch: max_user_epoch });
+            self
+                .emit(
+                    Claimed { recipient, amount: to_distribute, claim_epoch: week_cursor, max_epoch: max_user_epoch }
+                );
 
             to_distribute
         }

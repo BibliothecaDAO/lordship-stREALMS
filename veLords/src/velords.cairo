@@ -41,9 +41,9 @@ impl PointDefault of Default<Point> {
 mod velords {
     use core::cmp::{min, max};
     use core::num::traits::Zero;
+    use lordship::interfaces::IDLordsRewardPool::{IDLordsRewardPoolDispatcher, IDLordsRewardPoolDispatcherTrait};
     use lordship::interfaces::IERC20::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use lordship::interfaces::IVE::IVE;
-    use lordship::interfaces::IDLordsRewardPool::{IDLordsRewardPoolDispatcher, IDLordsRewardPoolDispatcherTrait};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
@@ -76,7 +76,6 @@ mod velords {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
-
         // pool for early exit penalties
         reward_pool: IDLordsRewardPoolDispatcher,
         // stores total amount of LORDS locked

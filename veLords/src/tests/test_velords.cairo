@@ -1,12 +1,12 @@
 use lordship::interfaces::IERC20::{IERC20Dispatcher, IERC20DispatcherTrait};
 use lordship::interfaces::IVE::{IVEDispatcher, IVEDispatcherTrait};
-use lordship::tests::common;
 use lordship::tests::common::assert_approx;
+use lordship::tests::common;
 use lordship::velords::Lock;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{load, start_prank, start_warp, stop_prank, CheatTarget};
-use starknet::{ContractAddress, Store, get_block_timestamp};
 use starknet::storage_access::StorePacking;
+use starknet::{ContractAddress, Store, get_block_timestamp};
 
 #[test]
 fn test_lock_packing() {
@@ -77,7 +77,7 @@ fn test_create_new_lock_pass() {
     let lock: Lock = velords.get_lock_for(blobert);
     assert_eq!(lock.amount, lock_amount.try_into().unwrap(), "lock amount mismatch");
     assert_eq!(lock.end_time, common::floor_to_week(unlock_time), "unlock time mismatch");
-    // TODO: test events
+// TODO: test events
 }
 
 #[test]
@@ -188,7 +188,9 @@ fn test_modify_lock_new_amount_and_time_pass() {
     velords.manage_lock(lock_amount, unlock_time, blobert);
 
     assert_eq!(lords.balance_of(blobert), balance - lock_amount, "LORDS balance mismatch after locking 1");
-    assert_eq!(velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 1");
+    assert_eq!(
+        velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 1"
+    );
 
     // blobert lock 1M more LORDS
     let next_lock_amount: u256 = 1_000_000 * common::ONE;
@@ -197,7 +199,9 @@ fn test_modify_lock_new_amount_and_time_pass() {
 
     let total_lock_amount: u256 = lock_amount + next_lock_amount;
     assert_eq!(lords.balance_of(blobert), balance - total_lock_amount, "LORDS balance mismatch after locking 2");
-    assert_eq!(velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 2");
+    assert_eq!(
+        velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 2"
+    );
     assert_approx(
         velords_token.balance_of(blobert),
         common::lock_balance(total_lock_amount, common::YEAR + common::WEEK),
@@ -213,7 +217,9 @@ fn test_modify_lock_new_amount_and_time_pass() {
     velords.manage_lock(0, unlock_time, blobert);
 
     assert_eq!(lords.balance_of(blobert), balance - total_lock_amount, "LORDS balance mismatch after locking 3");
-    assert_eq!(velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 3");
+    assert_eq!(
+        velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 3"
+    );
     assert_approx(
         velords_token.balance_of(blobert),
         common::lock_balance(total_lock_amount, common::YEAR * 2 + common::WEEK),
@@ -231,7 +237,9 @@ fn test_modify_lock_new_amount_and_time_pass() {
 
     let total_lock_amount: u256 = total_lock_amount + next_lock_amount;
     assert_eq!(lords.balance_of(blobert), balance - total_lock_amount, "LORDS balance mismatch after locking 4");
-    assert_eq!(velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 4");
+    assert_eq!(
+        velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 4"
+    );
     assert_approx(
         velords_token.balance_of(blobert),
         common::lock_balance(total_lock_amount, common::YEAR * 3 + common::WEEK),
@@ -325,7 +333,9 @@ fn test_modify_lock_amount_by_non_owner_pass() {
     velords.manage_lock(lock_amount, unlock_time, blobert);
 
     // sanity check
-    assert_eq!(velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 1");
+    assert_eq!(
+        velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 1"
+    );
     assert_approx(
         velords_token.balance_of(blobert),
         common::lock_balance(lock_amount, common::YEAR),
@@ -344,14 +354,16 @@ fn test_modify_lock_amount_by_non_owner_pass() {
     start_prank(CheatTarget::One(velords.contract_address), loaf);
     velords.manage_lock(amount_added, 0, blobert);
 
-    assert_eq!(velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 2");
+    assert_eq!(
+        velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 2"
+    );
     assert_approx(
         velords_token.balance_of(blobert),
         common::lock_balance(lock_amount + amount_added, common::YEAR),
         common::day_decline_of(lock_amount + amount_added) * 7,
         "blobert's veLORDS balance mismatch after locking 2"
     );
-    // TODO: events
+// TODO: events
 }
 
 #[test]
@@ -370,7 +382,9 @@ fn test_modify_lock_time_by_non_owner_noop() {
     velords.manage_lock(lock_amount, unlock_time, blobert);
 
     // sanity check
-    assert_eq!(velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 1");
+    assert_eq!(
+        velords_token.total_supply(), velords_token.balance_of(blobert), "total supply mismatch after locking 1"
+    );
     assert_approx(
         velords_token.balance_of(blobert),
         common::lock_balance(lock_amount, common::YEAR),
@@ -451,13 +465,13 @@ fn test_locked_balance_progression() {
         "blobert's veLORDS balance mismatch 1w before expiry"
     );
 
-
     // move time 1w after expiry
     let now: u64 = start + common::YEAR * 2 + common::WEEK;
     start_warp(CheatTarget::All, now);
 
     assert_eq!(velords_token.balance_of(blobert), 0, "blobert's veLORDS balance mismatch after expiry");
 }
-
 // test other public fns
 // test withdrawal - interacts with reward pool
+
+
