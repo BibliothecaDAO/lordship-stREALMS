@@ -127,6 +127,10 @@ mod bridge {
         fn deposit_tokens(
             ref self: ContractState, salt: felt252, owner_l1: EthAddress, token_ids: Span<u256>,
         ) {
+
+            assert!(token_ids.len() > 0, "no token id");
+            assert!(owner_l1.is_non_zero(), "owner l1 address is zero");
+
             let from = starknet::get_caller_address();
             let mut ids = token_ids;
             let erc721_dispatcher = ERC721ABIDispatcher {
