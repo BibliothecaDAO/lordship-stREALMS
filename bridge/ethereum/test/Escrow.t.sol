@@ -81,7 +81,7 @@ contract EscrowTest is Test {
 /**
    @title Escrow interface exposed for test.
  */
-contract EscrowPublic is RealmsEscrow {
+contract EscrowPublic is BridgeEscrow {
 
     /**
        @notice test _depositIntoEscrow.

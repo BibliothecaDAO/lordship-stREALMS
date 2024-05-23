@@ -8,25 +8,25 @@ import "starknet/IStarknetMessaging.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
- @title Realms state.
+ @title Bridge state.
 */
-contract RealmsState is Ownable {
+contract BridgeState is Ownable {
 
     // StarknetCore.
     IStarknetMessaging _starknetCoreAddress;
 
-    // Realms L2 address for messaging.
-    snaddress _bridgeL2Address;
+    // Bridge L2 address for messaging.
+    snaddress _l2BridgeAddress;
 
     // Bridge L2 selector to deposit token from L1.
-    felt252 _bridgeL2Selector;
+    felt252 _l2BridgeSelector;
 
-    // realms ERC721 contract address
-    address _bridgedTokenAddress;
+    // l1 ERC721 contract address
+    address _l1TokenAddress;
 
 
     /**
-       @notice Retrieves info about Realms L2 mapping.
+       @notice Retrieves info about Bridge L2 mapping.
 
        @return (realms L2 address, realms L2 selector).
     */
@@ -35,36 +35,36 @@ contract RealmsState is Ownable {
         view
         returns (snaddress, felt252)
     {
-        return (_bridgeL2Address, _bridgeL2Selector);
+        return (_l2BridgeAddress, _l2BridgeSelector);
     }
 
     /**
-       @notice Sets Realms L2 address.
+       @notice Sets Bridge L2 address.
 
-       @param l2Address Realms L2 address.
+       @param l2Address Bridge L2 address.
     */
-    function setBridgeL2Address(
+    function setL2BridgeAddress(
         uint256 l2Address
     )
         public
         onlyOwner
     {
-        _bridgeL2Address = Cairo.snaddressWrap(l2Address);
+        _l2BridgeAddress = Cairo.snaddressWrap(l2Address);
     }
 
     /**
-       @notice Sets Realms L2 selector of Realms L2 contract to be
+       @notice Sets Bridge L2 selector of Bridge L2 contract to be
        called when a message arrives into Starknet.
 
-       @param l2Selector Realms L2 selector.
+       @param l2Selector Bridge L2 selector.
     */
-    function setBridgeL2Selector(
+    function setL2BridgeSelector(
         uint256 l2Selector
     )
         public
         onlyOwner
     {
-        _bridgeL2Selector = Cairo.felt252Wrap(l2Selector);
+        _l2BridgeSelector = Cairo.felt252Wrap(l2Selector);
     }
 
 

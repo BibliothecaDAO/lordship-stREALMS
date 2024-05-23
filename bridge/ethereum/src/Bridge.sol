@@ -14,9 +14,9 @@ import "./IBridgeEvent.sol";
 
 
 /**
-   @title Realms bridge contract.
+   @title ERC721 bridge contract.
 */
-contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEscrow {
+contract Bridge is IBridgeEvent, UUPSOwnableProxied, BridgeState, BridgeEscrow {
 
     /**
        @notice Initializes the implementation, only callable once.
@@ -26,21 +26,21 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
     function initialize( bytes calldata data) public onlyInit{
         (
             address owner,
-            address bridgedTokenAddress,
+            address l1TokenAddress,
             IStarknetMessaging starknetCoreAddress,
-            uint256 bridgeL2Address,
-            uint256 bridgeL2Selector
+            uint256 l2BridgeAddress,
+            uint256 l2BridgeSelector
         ) = abi.decode(
             data,
             (address, address, IStarknetMessaging, uint256, uint256)
         );
         _starknetCoreAddress = starknetCoreAddress;
-        _bridgedTokenAddress = bridgedTokenAddress;
+        _l1TokenAddress = l1TokenAddress;
 
         _transferOwnership(owner);
 
-        setBridgeL2Address(bridgeL2Address);
-        setBridgeL2Selector(bridgeL2Selector);
+        setL2BridgeAddress(l2BridgeAddress);
+        setL2BridgeSelector(l2BridgeSelector);
     }
 
     /**
@@ -60,8 +60,8 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
             revert CairoWrapError();
         }
 
-        address bridgedTokenAddress = _bridgedTokenAddress;
-        _depositIntoEscrow(bridgedTokenAddress, ids);
+        address l1TokenAddress = _l1TokenAddress;
+        _depositIntoEscrow(l1TokenAddress, ids);
 
         Request memory req;
         req.hash = Protocol.requestHash(salt, ownerL2, ids);
@@ -72,8 +72,8 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
         uint256[] memory payload = Protocol.requestSerialize(req);
 
         IStarknetMessaging(_starknetCoreAddress).sendMessageToL2{value: msg.value}(
-            snaddress.unwrap(_bridgeL2Address),
-            felt252.unwrap(_bridgeL2Selector),
+            snaddress.unwrap(_l2BridgeAddress),
+            felt252.unwrap(_l2BridgeSelector),
             payload
         );
 
@@ -92,14 +92,14 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
 
         //todo @credence0x check if hash from msh consumption should be used
         _starknetCoreAddress.consumeMessageFromL2(
-                snaddress.unwrap(_bridgeL2Address),
+                snaddress.unwrap(_l2BridgeAddress),
                 request
             );
             
 
         Request memory req = Protocol.requestDeserialize(request);
 
-        _withdrawFromEscrow(_bridgedTokenAddress, req.ownerL1, req.tokenIds);
+        _withdrawFromEscrow(_l1TokenAddress, req.ownerL1, req.tokenIds);
 
         emit WithdrawRequestCompleted(req.hash, block.timestamp, request);
 
@@ -117,8 +117,8 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
         uint256 nonce
     ) external onlyOwner {
         IStarknetMessaging(_starknetCoreAddress).startL1ToL2MessageCancellation(
-            snaddress.unwrap(_bridgeL2Address), 
-            felt252.unwrap(_bridgeL2Selector), 
+            snaddress.unwrap(_l2BridgeAddress), 
+            felt252.unwrap(_l2BridgeSelector), 
             payload,
             nonce
         );
@@ -137,13 +137,13 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
         uint256 nonce
     ) external {
         IStarknetMessaging(_starknetCoreAddress).cancelL1ToL2Message(
-            snaddress.unwrap(_bridgeL2Address), 
-            felt252.unwrap(_bridgeL2Selector), 
+            snaddress.unwrap(_l2BridgeAddress), 
+            felt252.unwrap(_l2BridgeSelector), 
             payload,
             nonce
         );
         Request memory req = Protocol.requestDeserialize(payload);
-        _withdrawFromEscrow(_bridgedTokenAddress, req.ownerL1, req.tokenIds);
+        _withdrawFromEscrow(_l1TokenAddress, req.ownerL1, req.tokenIds);
 
         emit CancelRequestCompleted(req.hash, block.timestamp);
     }

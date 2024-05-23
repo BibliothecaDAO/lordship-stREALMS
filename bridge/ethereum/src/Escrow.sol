@@ -9,7 +9,7 @@ error NotEscrowedError();
 /**
    @title Contract responsible of escrowing tokens.
 */
-contract RealmsEscrow {
+contract BridgeEscrow {
 
     // Escrowed token.
     mapping(uint256 => bool) _escrowed;

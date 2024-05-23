@@ -41,12 +41,12 @@ contract BridgeTest is Test, IBridgeEvent {
 
         snCore = address(new StarknetMessagingLocal());
 
-        address impl = address(new RealmsBridge());
+        address impl = address(new Bridge());
         address l2bridgeAddress = address(0x56215);
         address l2bridgeSelector = address(0x9981726);
         
         bytes memory dataInit = abi.encodeWithSelector(
-            RealmsBridge.initialize.selector,
+            Bridge.initialize.selector,
             abi.encode(
                 address(this),
                 erc721C1,
@@ -254,15 +254,15 @@ contract BridgeTest is Test, IBridgeEvent {
         public
         returns (bytes32)
     {
-        (snaddress bridgeL2Address, felt252 bridgeL2Selector)
-            = RealmsBridge(payable(bridge)).l2Info();
+        (snaddress l2BridgeAddress, felt252 l2BridgeSelector)
+            = Bridge(payable(bridge)).l2Info();
 
         // To remove warning. Is there a better way?
-        assertTrue(felt252.unwrap(bridgeL2Selector) > 0);
+        assertTrue(felt252.unwrap(l2BridgeSelector) > 0);
 
         bytes32 msgHash = keccak256(
             abi.encodePacked(
-                snaddress.unwrap(bridgeL2Address),
+                snaddress.unwrap(l2BridgeAddress),
                 uint256(uint160(bridge)),
                 request.length,
                 request)

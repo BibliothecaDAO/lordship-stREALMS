@@ -7,13 +7,13 @@ mod bridge {
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
 
-    use realms::interfaces::{
+    use bridge::interfaces::{
         IBridge, IERC721MinterBurnerDispatcher, IERC721MinterBurnerDispatcherTrait
     };
 
     // events
-    use realms::interfaces::{DepositRequestInitiated, WithdrawRequestCompleted};
-    use realms::request::{Request, compute_request_hash};
+    use bridge::interfaces::{DepositRequestInitiated, WithdrawRequestCompleted};
+    use bridge::request::{Request, compute_request_hash};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -27,8 +27,8 @@ mod bridge {
 
     #[storage]
     struct Storage {
-        bridge_l1_address: EthAddress,
-        realms_l2_address: ContractAddress,
+        l1_bridge_address: EthAddress,
+        l2_token_address: ContractAddress,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         #[substorage(v0)]
@@ -37,10 +37,11 @@ mod bridge {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, bridge_admin: ContractAddress, bridge_l1_address: EthAddress,
+        ref self: ContractState, bridge_admin: ContractAddress, l1_bridge_address: EthAddress, l2_token_address: ContractAddress
     ) {
         self.ownable.initializer(bridge_admin);
-        self.bridge_l1_address.write(bridge_l1_address);
+        self.l1_bridge_address.write(l1_bridge_address);
+        self.l2_token_address.write(l2_token_address);
     }
 
 
@@ -69,14 +70,14 @@ mod bridge {
     #[l1_handler]
     fn withdraw_auto_from_l1(ref self: ContractState, from_address: felt252, req: Request) {
         // ensure only the l1 bridge contract can cause this function to be called
-        assert(self.bridge_l1_address.read().into() == from_address, 'Invalid L1 msg sender');
+        assert(self.l1_bridge_address.read().into() == from_address, 'Invalid L1 msg sender');
 
         let mut token_ids = req.ids;
         loop {
             match token_ids.pop_front() {
                 Option::Some(token_id) => {
                     IERC721MinterBurnerDispatcher {
-                        contract_address: self.realms_l2_address.read()
+                        contract_address: self.l2_token_address.read()
                     }
                         .safe_mint(req.owner_l2, *token_id, array![].span());
                 },
@@ -106,13 +107,22 @@ mod bridge {
 
     #[abi(embed_v0)]
     impl BridgeImpl of IBridge<ContractState> {
-        fn set_bridge_l1_addr(ref self: ContractState, address: EthAddress) {
+        fn set_l1_bridge_address(ref self: ContractState, address: EthAddress) {
             self.ownable.assert_only_owner();
-            self.bridge_l1_address.write(address);
+            self.l1_bridge_address.write(address);
         }
 
-        fn get_bridge_l1_addr(self: @ContractState) -> EthAddress {
-            self.bridge_l1_address.read()
+        fn set_l2_token_address(ref self: ContractState, address: ContractAddress) {
+            self.ownable.assert_only_owner();
+            self.l2_token_address.write(address);
+        }
+
+        fn get_l1_bridge_address(self: @ContractState) -> EthAddress {
+            self.l1_bridge_address.read()
+        }
+
+        fn get_l2_token_address(self: @ContractState) -> ContractAddress {
+            self.l2_token_address.read()
         }
 
 
@@ -134,7 +144,7 @@ mod bridge {
             let from = starknet::get_caller_address();
             let mut ids = token_ids;
             let erc721_dispatcher = ERC721ABIDispatcher {
-                contract_address: self.realms_l2_address.read()
+                contract_address: self.l2_token_address.read()
             };
             loop {
                 match ids.pop_front() {
@@ -144,7 +154,7 @@ mod bridge {
 
                         // burn token
                         IERC721MinterBurnerDispatcher {
-                            contract_address: self.realms_l2_address.read()
+                            contract_address: self.l2_token_address.read()
                         }
                             .burn(*token_id);
                     },
@@ -154,7 +164,7 @@ mod bridge {
 
             let req = Request {
                 hash: compute_request_hash(
-                    salt, self.realms_l2_address.read(), owner_l1, token_ids
+                    salt, self.l2_token_address.read(), owner_l1, token_ids
                 ),
                 owner_l1,
                 owner_l2: starknet::get_caller_address(),
@@ -164,7 +174,7 @@ mod bridge {
             let mut buf: Array<felt252> = array![];
             req.serialize(ref buf);
 
-            starknet::send_message_to_l1_syscall(self.bridge_l1_address.read().into(), buf.span(),)
+            starknet::send_message_to_l1_syscall(self.l1_bridge_address.read().into(), buf.span(),)
                 .unwrap_syscall();
 
             self

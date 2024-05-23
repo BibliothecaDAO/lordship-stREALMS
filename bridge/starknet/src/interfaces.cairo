@@ -1,13 +1,16 @@
 use array::{SpanTrait};
 use starknet::{ClassHash, ContractAddress, EthAddress};
-use realms::request::Request;
+use bridge::request::Request;
 
 #[starknet::interface]
 trait IBridge<T> {
     fn deposit_tokens(ref self: T, salt: felt252, owner_l1: EthAddress, token_ids: Span<u256>,);
 
-    fn set_bridge_l1_addr(ref self: T, address: EthAddress);
-    fn get_bridge_l1_addr(self: @T) -> EthAddress;
+    fn set_l1_bridge_address(ref self: T, address: EthAddress);
+    fn set_l2_token_address(ref self: T, address: ContractAddress);
+
+    fn get_l1_bridge_address(self: @T) -> EthAddress;
+    fn get_l2_token_address(self: @T) -> ContractAddress;
 }
 
 #[starknet::interface]
