@@ -32,8 +32,8 @@ pragma solidity ^0.8.0;
 //             abi.encode(
 //                 config.deployerAddress,
 //                 config.starknetCoreAddress,
-//                 config.realmsL2Address,
-//                 config.realmsL2Selector
+//                 config.bridgeL2Address,
+//                 config.bridgeL2Selector
 //             )
 //         );
 
