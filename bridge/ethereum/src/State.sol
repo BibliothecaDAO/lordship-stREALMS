@@ -16,13 +16,13 @@ contract RealmsState is Ownable {
     IStarknetMessaging _starknetCoreAddress;
 
     // Realms L2 address for messaging.
-    snaddress _realmsBridgeL2Address;
+    snaddress _bridgeL2Address;
 
     // Bridge L2 selector to deposit token from L1.
-    felt252 _realmsBridgeL2Selector;
+    felt252 _bridgeL2Selector;
 
     // realms ERC721 contract address
-    address _realmContractAddress;
+    address _bridgedTokenAddress;
 
 
     /**
@@ -35,7 +35,7 @@ contract RealmsState is Ownable {
         view
         returns (snaddress, felt252)
     {
-        return (_realmsBridgeL2Address, _realmsBridgeL2Selector);
+        return (_bridgeL2Address, _bridgeL2Selector);
     }
 
     /**
@@ -43,13 +43,13 @@ contract RealmsState is Ownable {
 
        @param l2Address Realms L2 address.
     */
-    function setRealmsBridgeL2Address(
+    function setBridgeL2Address(
         uint256 l2Address
     )
         public
         onlyOwner
     {
-        _realmsBridgeL2Address = Cairo.snaddressWrap(l2Address);
+        _bridgeL2Address = Cairo.snaddressWrap(l2Address);
     }
 
     /**
@@ -58,13 +58,13 @@ contract RealmsState is Ownable {
 
        @param l2Selector Realms L2 selector.
     */
-    function setRealmsBridgeL2Selector(
+    function setBridgeL2Selector(
         uint256 l2Selector
     )
         public
         onlyOwner
     {
-        _realmsBridgeL2Selector = Cairo.felt252Wrap(l2Selector);
+        _bridgeL2Selector = Cairo.felt252Wrap(l2Selector);
     }
 
 
