@@ -39,7 +39,7 @@ declare:
 	sleep 2
 
 # Realms deploy
-realms_deploy:
+bridge_deploy:
 	starkli deploy ${bridge_class_hash} "${ADMIN_ACCOUNT_ADDR}" "${BRIDGE_L1_ADDRESS}" ${erc721b_class_hash} ${priv_key}
 
 # Realms upgrade with local version of realms.

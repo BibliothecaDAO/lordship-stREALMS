@@ -6,14 +6,16 @@ import "forge-std/Vm.sol";
 address constant HEVM_ADDRESS = address(bytes20(uint160(uint256(keccak256("hevm cheat code")))));
 
 struct Config {
+    address ownerAddress;
+    address l1TokenAddress;
     address deployerAddress;
     uint256 deployerPrivateKey;
 
     address starknetCoreAddress;
-    address realmsL1ProxyAddress;
+    address bridgeL1ProxyAddress;
 
-    uint256 realmsL2Address;
-    uint256 realmsL2Selector;
+    uint256 l2BridgeAddress;
+    uint256 l2BridgeSelector;
 }
 
 library Utils {
@@ -26,14 +28,17 @@ library Utils {
         VmSafe vm = VmSafe(HEVM_ADDRESS);
         
         return Config({
+            ownerAddress: vm.envAddress("OWNER_ADDRESS"),
+            l1TokenAddress: vm.envAddress("L1_TOKEN_ADDRESS"),
+            
             deployerAddress: vm.envAddress("ACCOUNT_ADDRESS"),
             deployerPrivateKey: vm.envUint("ACCOUNT_PRIVATE_KEY"),
 
             starknetCoreAddress: vm.envAddress("STARKNET_CORE_L1_ADDRESS"),
-            realmsL1ProxyAddress: vm.envAddress("REALMS_L1_PROXY_ADDRESS"),
+            bridgeL1ProxyAddress: vm.envAddress("BRIDGE_L1_PROXY_ADDRESS"),
 
-            realmsL2Address: vm.envUint("REALMS_L2_ADDRESS"),
-            realmsL2Selector: vm.envUint("REALMS_L2_SELECTOR")
+            l2BridgeAddress: vm.envUint("BRIDGE_L2_ADDRESS"),
+            l2BridgeSelector: vm.envUint("BRIDGE_L2_SELECTOR")
             });
     }
 

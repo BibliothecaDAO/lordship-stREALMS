@@ -41,8 +41,8 @@ pragma solidity ^0.8.0;
 //             abi.encode(
 //                 config.deployerAddress,
 //                 snCoreAddress,
-//                 config.realmsL2Address,
-//                 config.realmsL2Selector
+//                 config.l2BridgeAddress,
+//                 config.l2BridgeSelector
 //             )
 //         );
 //         address realmsProxyAddress = address(new ERC1967Proxy(realmsImpl, dataInit));

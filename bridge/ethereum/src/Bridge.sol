@@ -14,9 +14,9 @@ import "./IBridgeEvent.sol";
 
 
 /**
-   @title Realms bridge contract.
+   @title ERC721 bridge contract.
 */
-contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEscrow {
+contract Bridge is IBridgeEvent, UUPSOwnableProxied, BridgeState, BridgeEscrow {
 
     /**
        @notice Initializes the implementation, only callable once.
@@ -26,21 +26,21 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
     function initialize( bytes calldata data) public onlyInit{
         (
             address owner,
-            address realmContractAddress,
+            address l1TokenAddress,
             IStarknetMessaging starknetCoreAddress,
-            uint256 realmsL2Address,
-            uint256 realmsL2Selector
+            uint256 l2BridgeAddress,
+            uint256 l2BridgeSelector
         ) = abi.decode(
             data,
             (address, address, IStarknetMessaging, uint256, uint256)
         );
         _starknetCoreAddress = starknetCoreAddress;
-        _realmContractAddress = realmContractAddress;
+        _l1TokenAddress = l1TokenAddress;
 
         _transferOwnership(owner);
 
-        setRealmsBridgeL2Address(realmsL2Address);
-        setRealmsBridgeL2Selector(realmsL2Selector);
+        setL2BridgeAddress(l2BridgeAddress);
+        setL2BridgeSelector(l2BridgeSelector);
     }
 
     /**
@@ -60,8 +60,8 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
             revert CairoWrapError();
         }
 
-        address realmContractAddress = _realmContractAddress;
-        _depositIntoEscrow(realmContractAddress, ids);
+        address l1TokenAddress = _l1TokenAddress;
+        _depositIntoEscrow(l1TokenAddress, ids);
 
         Request memory req;
         req.hash = Protocol.requestHash(salt, ownerL2, ids);
@@ -72,8 +72,8 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
         uint256[] memory payload = Protocol.requestSerialize(req);
 
         IStarknetMessaging(_starknetCoreAddress).sendMessageToL2{value: msg.value}(
-            snaddress.unwrap(_realmsBridgeL2Address),
-            felt252.unwrap(_realmsBridgeL2Selector),
+            snaddress.unwrap(_l2BridgeAddress),
+            felt252.unwrap(_l2BridgeSelector),
             payload
         );
 
@@ -92,19 +92,20 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
 
         //todo @credence0x check if hash from msh consumption should be used
         _starknetCoreAddress.consumeMessageFromL2(
-                snaddress.unwrap(_realmsBridgeL2Address),
+                snaddress.unwrap(_l2BridgeAddress),
                 request
             );
             
 
         Request memory req = Protocol.requestDeserialize(request);
 
-        _withdrawFromEscrow(_realmContractAddress, req.ownerL1, req.tokenIds);
+        _withdrawFromEscrow(_l1TokenAddress, req.ownerL1, req.tokenIds);
 
         emit WithdrawRequestCompleted(req.hash, block.timestamp, request);
 
     }
 
+    //todo @credence0x should onlyAdmin be able to start cancellation?
     /**
         @notice Start the cancellation of a given request.
      
@@ -116,8 +117,8 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
         uint256 nonce
     ) external onlyOwner {
         IStarknetMessaging(_starknetCoreAddress).startL1ToL2MessageCancellation(
-            snaddress.unwrap(_realmsBridgeL2Address), 
-            felt252.unwrap(_realmsBridgeL2Selector), 
+            snaddress.unwrap(_l2BridgeAddress), 
+            felt252.unwrap(_l2BridgeSelector), 
             payload,
             nonce
         );
@@ -136,13 +137,13 @@ contract RealmsBridge is IBridgeEvent, UUPSOwnableProxied, RealmsState, RealmsEs
         uint256 nonce
     ) external {
         IStarknetMessaging(_starknetCoreAddress).cancelL1ToL2Message(
-            snaddress.unwrap(_realmsBridgeL2Address), 
-            felt252.unwrap(_realmsBridgeL2Selector), 
+            snaddress.unwrap(_l2BridgeAddress), 
+            felt252.unwrap(_l2BridgeSelector), 
             payload,
             nonce
         );
         Request memory req = Protocol.requestDeserialize(payload);
-        _withdrawFromEscrow(_realmContractAddress, req.ownerL1, req.tokenIds);
+        _withdrawFromEscrow(_l1TokenAddress, req.ownerL1, req.tokenIds);
 
         emit CancelRequestCompleted(req.hash, block.timestamp);
     }
