@@ -24,6 +24,11 @@ trait IERC721MinterBurner<TState> {
     );
 }
 
+#[starknet::interface]
+trait IERC721MetadataCompressed<TState> {
+    fn get_uri_data(self: @TState, token_id: u16) -> (ByteArray, ByteArray, felt252);
+    fn set_uri_data(ref self: TState, data: Span<(u16, ByteArray, ByteArray, felt252)>);
+}
 
 #[starknet::contract]
 mod Lordship {
@@ -31,6 +36,7 @@ mod Lordship {
     use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
     use openzeppelin::governance::utils::interfaces::votes::IVotes;
     use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::token::erc721::interface::{IERC721Metadata, IERC721MetadataCamelOnly};
     use openzeppelin::token::erc721::{ERC721Component};
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
@@ -42,7 +48,8 @@ mod Lordship {
     use strealm::components::erc721::extensions::ERC721VotesComponent;
     use strealm::components::strealm::StRealmComponent::InternalTrait as StRealmInternalTrait;
     use strealm::components::strealm::StRealmComponent;
-    use super::{IERC721MinterBurner};
+    use strealm::utils::make_json_and_base64_encode_metadata;
+    use super::{IERC721MinterBurner, IERC721MetadataCompressed};
     use super::{MINTER_ROLE, UPGRADER_ROLE};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -59,9 +66,17 @@ mod Lordship {
     impl ERC721VotesComponentImpl =
         ERC721VotesComponent::ERC721VotesImpl<ContractState>;
 
-    // ERC721Mixin
+    // ERC721
     #[abi(embed_v0)]
-    impl ERC721MixinImpl = ERC721Component::ERC721MixinImpl<ContractState>;
+    impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
+
+    // ERC721CamelOnly
+    #[abi(embed_v0)]
+    impl ERC721CamelOnlyImpl = ERC721Component::ERC721CamelOnlyImpl<ContractState>;
+
+    // SRC5
+    #[abi(embed_v0)]
+    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
 
     // Nonces
     #[abi(embed_v0)]
@@ -96,7 +111,10 @@ mod Lordship {
         #[substorage(v0)]
         nonces: NoncesComponent::Storage,
         #[substorage(v0)]
-        strealm: StRealmComponent::Storage
+        strealm: StRealmComponent::Storage,
+        _ERC721_token_name: LegacyMap<u16, ByteArray>,
+        _ERC721_token_image: LegacyMap<u16, ByteArray>,
+        _ERC721_token_attributes: LegacyMap<u16, felt252>
     }
 
     #[event]
@@ -126,6 +144,73 @@ mod Lordship {
         }
         fn version() -> felt252 {
             '1'
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl ERC721Metadata of IERC721Metadata<ContractState> {
+        /// Returns the NFT name.
+        fn name(self: @ContractState) -> ByteArray {
+            self.erc721.ERC721_name.read()
+        }
+
+        /// Returns the NFT symbol.
+        fn symbol(self: @ContractState) -> ByteArray {
+            self.erc721.ERC721_symbol.read()
+        }
+
+        /// Returns the Uniform Resource Identifier (URI) for the `token_id` token.
+        /// If the URI is not set, the return value will be an empty ByteArray.
+        ///
+        /// Requirements:
+        ///
+        /// - `token_id` exists.
+        fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
+            self.erc721._require_owned(token_id);
+
+            let id: u16 = token_id.try_into().unwrap();
+            make_json_and_base64_encode_metadata(
+                self._ERC721_token_name.read(id),
+                self._ERC721_token_image.read(id),
+                self._ERC721_token_attributes.read(id)
+            )
+        }
+    }
+
+
+    #[abi(embed_v0)]
+    impl ERC721MetadataCamelOnly of IERC721MetadataCamelOnly<ContractState> {
+        fn tokenURI(self: @ContractState, tokenId: u256) -> ByteArray {
+            self.token_uri(tokenId)
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl ERC721MetadataCompressed of IERC721MetadataCompressed<ContractState> {
+        fn get_uri_data(self: @ContractState, token_id: u16) -> (ByteArray, ByteArray, felt252) {
+            (
+                self._ERC721_token_name.read(token_id),
+                self._ERC721_token_image.read(token_id),
+                self._ERC721_token_attributes.read(token_id)
+            )
+        }
+
+        fn set_uri_data(
+            ref self: ContractState, mut data: Span<(u16, ByteArray, ByteArray, felt252)>
+        ) {
+            self.access_control.assert_only_role(DEFAULT_ADMIN_ROLE);
+
+            loop {
+                match data.pop_front() {
+                    Option::Some(data) => {
+                        let (token_id, name, image, attributes) = data;
+                        self._ERC721_token_name.write(*token_id, name.clone());
+                        self._ERC721_token_image.write(*token_id, image.clone());
+                        self._ERC721_token_attributes.write(*token_id, attributes.clone());
+                    },
+                    Option::None => { break; }
+                }
+            };
         }
     }
 

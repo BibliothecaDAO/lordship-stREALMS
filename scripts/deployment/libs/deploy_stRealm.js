@@ -11,8 +11,7 @@ const TARGET_PATH = path.join(
   "..",
   "..",
   "..",
-  "bridge",
-  "starknet",
+  "stRealms",
   "target",
   "release"
 );
@@ -33,8 +32,9 @@ export const deploy = async (
 
   // Load account
   let name = "strealm";
+  let contractName = "Lordship";
   const account = getAccount();
-  const class_hash = (await declare(getPath(TARGET_PATH, name), name)).class_hash;
+  const class_hash = (await declare(getPath(TARGET_PATH, contractName), name)).class_hash;
 
   let constructorCalldata = [
     DEFAULT_ADMIN,
