@@ -1,15 +1,16 @@
 use alexandria_encoding::base64::get_base64_char_set;
-use alexandria_math::BitShift;
+use alexandria_math::{BitShift, pow};
 use graffiti::json::Builder;
 use graffiti::json::JsonImpl;
 
+const BYTE_LEN: u256 = 8; // a byte is 8 bits
+const MASK_1_BYTE: u256 = 0xff;
+const MASK_2_BYTES: u256 = 0xffff;
 
-fn encoded_attributes_to_array(value: felt252) -> Span<u8> {
-    let mut value: u256 = value.into();
+fn encoded_attributes_to_array(mut value: u256) -> Span<u8> {
     let mut res: Array<u8> = array![];
     while (value > 0) {
-        let _0xff: u256 = 0xff.try_into().unwrap();
-        let byte: u8 = (value & _0xff).try_into().unwrap();
+        let byte: u8 = (value & MASK_1_BYTE).try_into().unwrap();
         res.append(byte);
 
         value = BitShift::shr(value, 8);
@@ -19,16 +20,24 @@ fn encoded_attributes_to_array(value: felt252) -> Span<u8> {
 }
 
 
-fn make_json_and_base64_encode_metadata(
-    name: ByteArray, url: ByteArray, attributes: felt252
-) -> ByteArray {
-    let mut arr: Span<u8> = encoded_attributes_to_array(attributes);
-    let region = arr.pop_front().unwrap();
-    let cities = arr.pop_front().unwrap();
-    let harbors = arr.pop_front().unwrap();
-    let rivers = arr.pop_front().unwrap();
-    let wonder = arr.pop_back().unwrap();
-    let order = arr.pop_back().unwrap();
+fn make_json_and_base64_encode_metadata(metadata: felt252) -> ByteArray {
+    let original_metadata: u256 = metadata.into();
+
+    let attrs_len: u256 = original_metadata & MASK_1_BYTE;
+
+    // remove name length and attrs length from metadata
+    let metadata_only: u256 = BitShift::shr(original_metadata, 2 * BYTE_LEN);
+
+    let attrs_mask: u256 = pow(2, BYTE_LEN * attrs_len) - 1;
+    let attributes: u256 = metadata_only & attrs_mask;
+
+    let mut attrs_arr: Span<u8> = encoded_attributes_to_array(attributes);
+    let region = attrs_arr.pop_front().unwrap();
+    let cities = attrs_arr.pop_front().unwrap();
+    let harbors = attrs_arr.pop_front().unwrap();
+    let rivers = attrs_arr.pop_front().unwrap();
+    let wonder = attrs_arr.pop_back().unwrap();
+    let order = attrs_arr.pop_back().unwrap();
 
     let mut attrs: Array<ByteArray> = array![];
     attrs
@@ -55,7 +64,7 @@ fn make_json_and_base64_encode_metadata(
         );
 
     loop {
-        match arr.pop_front() {
+        match attrs_arr.pop_front() {
             Option::Some(resource) => {
                 attrs
                     .append(
@@ -87,10 +96,12 @@ fn make_json_and_base64_encode_metadata(
                 .build()
         );
 
-    let metadata = JsonImpl::new()
-        .add("name", name)
-        .add("image", format!("https://gateway.pinata.cloud/ipfs/{}", url))
-        .add_array("attributes", attrs.span());
+    let name: u256 = BitShift::shr(metadata_only, BYTE_LEN * attrs_len);
+    let mut name_str: ByteArray = "";
+    let name_len: u256 = BitShift::shr(original_metadata, BYTE_LEN) & MASK_1_BYTE;
+    name_str.append_word(name.try_into().unwrap(), name_len.try_into().unwrap());
+
+    let metadata = JsonImpl::new().add("name", name_str).add_array("attributes", attrs.span());
 
     format!("data:application/json;base64,{}", bytes_base64_encode(metadata.build()))
 }

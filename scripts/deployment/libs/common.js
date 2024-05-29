@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { json } from "starknet";
 import { getNetwork, getAccount } from "./network.js";
+import colors from "colors";
 
 
 export const getContracts = (TARGET_PATH) => {
@@ -40,6 +41,13 @@ export const declare = async (filepath, contract_name) => {
   );
 
   const account = getAccount();
+  account.decla
+  // console.log(
+  //   await account.estimateDeclareFee({
+  //     contract: compiledFile,
+  //     casm: compiledSierraCasmFile,
+  //   })
+  // );
   const contract = await account.declareIfNot({
     contract: compiledFile,
     casm: compiledSierraCasmFile,

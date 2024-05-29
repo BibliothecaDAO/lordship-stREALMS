@@ -25,13 +25,13 @@ trait IERC721MinterBurner<TState> {
 }
 
 #[starknet::interface]
-trait IERC721MetadataCompressed<TState> {
-    fn get_uri_data(self: @TState, token_id: u16) -> (ByteArray, ByteArray, felt252);
-    fn set_uri_data(ref self: TState, data: Span<(u16, ByteArray, ByteArray, felt252)>);
+trait IRealmMetadataLibClassHash<TState> {
+    fn get_metadata_lib_class_hash(self: @TState) -> starknet::ClassHash;
+    fn set_metadata_lib_class_hash(ref self: TState, class_hash: starknet::ClassHash);
 }
 
 #[starknet::contract]
-mod Lordship {
+mod StRealm {
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
     use openzeppelin::governance::utils::interfaces::votes::IVotes;
@@ -48,8 +48,11 @@ mod Lordship {
     use strealm::components::erc721::extensions::ERC721VotesComponent;
     use strealm::components::strealm::StRealmComponent::InternalTrait as StRealmInternalTrait;
     use strealm::components::strealm::StRealmComponent;
-    use strealm::utils::make_json_and_base64_encode_metadata;
-    use super::{IERC721MinterBurner, IERC721MetadataCompressed};
+    use strealm::contracts::metadata::metadata::IRealmMetadataEncodedDispatcherTrait;
+    use strealm::contracts::metadata::metadata::{
+        IRealmMetadataEncoded, IRealmMetadataEncodedLibraryDispatcher
+    };
+    use super::{IERC721MinterBurner, IRealmMetadataLibClassHash};
     use super::{MINTER_ROLE, UPGRADER_ROLE};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -112,9 +115,7 @@ mod Lordship {
         nonces: NoncesComponent::Storage,
         #[substorage(v0)]
         strealm: StRealmComponent::Storage,
-        _ERC721_token_name: LegacyMap<u16, ByteArray>,
-        _ERC721_token_image: LegacyMap<u16, ByteArray>,
-        _ERC721_token_attributes: LegacyMap<u16, felt252>
+        StRealm_metadata_lib: IRealmMetadataEncodedLibraryDispatcher
     }
 
     #[event]
@@ -167,13 +168,8 @@ mod Lordship {
         /// - `token_id` exists.
         fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
             self.erc721._require_owned(token_id);
-
             let id: u16 = token_id.try_into().unwrap();
-            make_json_and_base64_encode_metadata(
-                self._ERC721_token_name.read(id),
-                self._ERC721_token_image.read(id),
-                self._ERC721_token_attributes.read(id)
-            )
+            self.StRealm_metadata_lib.read().get_decoded_metadata(id)
         }
     }
 
@@ -186,31 +182,26 @@ mod Lordship {
     }
 
     #[abi(embed_v0)]
-    impl ERC721MetadataCompressed of IERC721MetadataCompressed<ContractState> {
-        fn get_uri_data(self: @ContractState, token_id: u16) -> (ByteArray, ByteArray, felt252) {
-            (
-                self._ERC721_token_name.read(token_id),
-                self._ERC721_token_image.read(token_id),
-                self._ERC721_token_attributes.read(token_id)
-            )
+    impl RealmMetadataEncoded of IRealmMetadataEncoded<ContractState> {
+        fn get_encoded_metadata(self: @ContractState, token_id: u16) -> felt252 {
+            self.StRealm_metadata_lib.read().get_encoded_metadata(token_id)
         }
 
-        fn set_uri_data(
-            ref self: ContractState, mut data: Span<(u16, ByteArray, ByteArray, felt252)>
-        ) {
-            self.access_control.assert_only_role(DEFAULT_ADMIN_ROLE);
+        fn get_decoded_metadata(self: @ContractState, token_id: u16) -> ByteArray {
+            self.StRealm_metadata_lib.read().get_decoded_metadata(token_id)
+        }
+    }
 
-            loop {
-                match data.pop_front() {
-                    Option::Some(data) => {
-                        let (token_id, name, image, attributes) = data;
-                        self._ERC721_token_name.write(*token_id, name.clone());
-                        self._ERC721_token_image.write(*token_id, image.clone());
-                        self._ERC721_token_attributes.write(*token_id, attributes.clone());
-                    },
-                    Option::None => { break; }
-                }
-            };
+
+    #[abi(embed_v0)]
+    impl RealmMetadataLibClassHash of IRealmMetadataLibClassHash<ContractState> {
+        fn get_metadata_lib_class_hash(self: @ContractState) -> ClassHash {
+            self.StRealm_metadata_lib.read().class_hash
+        }
+
+        fn set_metadata_lib_class_hash(ref self: ContractState, class_hash: ClassHash) {
+            self.access_control.assert_only_role(DEFAULT_ADMIN_ROLE);
+            self.StRealm_metadata_lib.write(IRealmMetadataEncodedLibraryDispatcher { class_hash })
         }
     }
 
@@ -329,7 +320,8 @@ mod Lordship {
         upgrader: ContractAddress,
         flow_rate: u256,
         reward_token: ContractAddress,
-        reward_payer: ContractAddress
+        reward_payer: ContractAddress,
+        metadata_lib_class_hash: ClassHash
     ) {
         self.erc721.initializer("Staked Realm", "stREALM", "");
         self.strealm.initializer(:flow_rate, :reward_token, :reward_payer);
@@ -338,5 +330,9 @@ mod Lordship {
         self.access_control._grant_role(DEFAULT_ADMIN_ROLE, default_admin);
         self.access_control._grant_role(MINTER_ROLE, minter);
         self.access_control._grant_role(UPGRADER_ROLE, upgrader);
+
+        self
+            .StRealm_metadata_lib
+            .write(IRealmMetadataEncodedLibraryDispatcher { class_hash: metadata_lib_class_hash })
     }
 }

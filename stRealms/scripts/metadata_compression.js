@@ -1,9 +1,11 @@
+const { assert } = require("console");
 const fs = require("fs");
 const path = require("path");
 
 // Define paths to the input and output files
 const inputFilePath = path.join(__dirname, "metadata_original.json");
 const outputFilePath = path.join(__dirname, "metadata_compressed.json");
+const cairoFilePath = path.join(__dirname, "..", "src", "metadata.cairo");
 
 // Character map for transliteration to ASCII
 const charMap = {
@@ -70,6 +72,17 @@ const generateMappingFunction = (mapping, name) => {
   return functionString;
 };
 
+// Function to generate mapping function string for Cairo
+const generateCompressDataFunction = (jsonData) => {
+  let functionString = `fn compressed_metadata(token_id: felt252) -> felt252 {\n    match token_id {\n`;
+  functionString += `        0 => panic!("zero token id"), \n`;
+  for (const [key, value] of Object.entries(jsonData)) {
+    functionString += `        ${key} => ${value["serialized"]},\n`;
+  }
+  functionString += `        _ => panic!("max token id exceeded")\n    }\n}`;
+  return functionString;
+};
+
 // Function to transliterate a string to ASCII
 const transliterate = (str) => {
   return str
@@ -110,7 +123,7 @@ const strToFeltArr = (str) => {
 };
 
 // Function to convert array to U256
-const arrayToU256 = (arr) => {
+const numArrayToEncodedU256 = (arr) => {
   if (arr.length > 32) {
     throw new Error("Array length exceeds the maximum allowed length of 32");
   }
@@ -227,20 +240,39 @@ fs.readFile(inputFilePath, "utf8", (err, data) => {
     jsonData[key] = newArray;
   }
 
+  let max_name_len = 12;
+  let max_attrs_len = 13;
+
   // Serialize data for Cairo
   for (const key in jsonData) {
     const item = jsonData[key];
 
-    let serializedArr = [];
     let name = item.shift();
-    let url = item.shift();
-    serializeStrToByteArray(name, serializedArr);
-    serializeStrToByteArray(url, serializedArr);
-    serializedArr.push(arrayToU256(item));
+    let name_felt = strToFeltArr(name)[0];
+    assert(name.length <= max_name_len);
+
+    // remove url. var unused
+    let _ = item.shift();
+
+    // the remaining items are attrs
+    let attrs_len = item.length;
+    let attrs_felt = numArrayToEncodedU256(item);
+    assert(attrs_len <= max_attrs_len);
+
+    // final felt should be the compress (name, attrs,name.length, attrs_len) which
+    // should have maximum bytes of (max_name_len,max_attrs_len,1,1)
+
+    let final_felt =
+      (((((BigInt(name_felt) << BigInt(attrs_len * 8)) | BigInt(attrs_felt)) <<
+        BigInt(8)) |
+        BigInt(name.length)) <<
+        BigInt(8)) |
+      BigInt(attrs_len);
+    final_felt = `0x${final_felt.toString(16)}`;
 
     jsonData[key] = {
-      deserialized: [transliterate(name), url, arrayToU256(item)],
-      serialized: serializedArr,
+      deserialized: [transliterate(name), attrs_felt],
+      serialized: [final_felt],
     };
   }
 
@@ -248,8 +280,13 @@ fs.readFile(inputFilePath, "utf8", (err, data) => {
   console.log(`\n\n\n ${generateMappingFunction(orderMap, "order")}`);
   console.log(`\n\n\n ${generateMappingFunction(wonderMap, "wonder")}`);
   console.log(`\n\n\n ${generateMappingFunction(resourceMap, "resource")}`);
+  console.log(
+    `\nmax name len is ${max_name_len} and max attrs len is ${max_attrs_len} so ${max_name_len} + ${max_attrs_len} + 1(name length) + 1(attrs length) = ${
+      1 + 1 + max_attrs_len + max_name_len
+    } and that's less than 32 . This means both can fit in a single felt\n\n`
+  );
 
-  // Save the updated JSON data to new_custom.json
+  // Save the updated JSON data to output file path
   fs.writeFile(
     outputFilePath,
     JSON.stringify(jsonData, null, 2),
@@ -262,4 +299,19 @@ fs.readFile(inputFilePath, "utf8", (err, data) => {
       }
     }
   );
+
+  // generate cairo file to store compressed json 
+  fs.writeFile(
+    cairoFilePath,
+    generateCompressDataFunction(jsonData),
+    "utf8",
+    (err) => {
+      if (err) {
+        console.error("Error writing the file:", err);
+      } else {
+        console.log(`Updated data has been saved to ${cairoFilePath}`);
+      }
+    }
+  );
 });
+// "‘illo‘‘i‘‘i‘";

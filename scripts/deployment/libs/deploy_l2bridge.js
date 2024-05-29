@@ -20,8 +20,11 @@ const TARGET_PATH = path.join(
 
 
 
-
-export const deploy = async (BRIDGE_ADMIN, BRIDGE_L1_ADDRESS) => {
+export const deploy = async (
+  BRIDGE_ADMIN,
+  BRIDGE_L1_BRIDGE_ADDRESS,
+  BRIDGE_L2_TOKEN_ADDRESS
+) => {
   ///////////////////////////////////////////
   ////////    L2 Bridge         /////////////
   ///////////////////////////////////////////
@@ -36,7 +39,11 @@ export const deploy = async (BRIDGE_ADMIN, BRIDGE_L1_ADDRESS) => {
     await declare(getPath(TARGET_PATH, contractName), realName)
   ).class_hash;
 
-  let constructorCalldata = [BRIDGE_ADMIN, BRIDGE_L1_ADDRESS];
+  let constructorCalldata = [
+    BRIDGE_ADMIN, 
+    BRIDGE_L1_BRIDGE_ADDRESS, 
+    BRIDGE_L2_TOKEN_ADDRESS
+  ];
 
   // Deploy contract
   console.log(`\nDeploying ${realName} ... \n\n`.green);
@@ -60,7 +67,7 @@ export const deploy = async (BRIDGE_ADMIN, BRIDGE_L1_ADDRESS) => {
 export const deployl2Bridge = async () => {
   let BRIDGE__ADMIN =
     0x06a4d4e8c1cc9785e125195a2f8bd4e5b0c7510b19f3e2dd63533524f5687e41n;
-  let BRIDGE__L1_BRIDGE_ADDRESS =0x0n;
+  let BRIDGE__L1_BRIDGE_ADDRESS = 0x79293120c28a4abe3c4afa2a1d4a9884fcf8326en;
   let BRIDGE__L2_TOKEN_ADDRESS =
     0x2b80629170ef5d194b661bc2a2cec1ec24acc47d36a40a1f88bf6aee3f986e5n;
   await deploy(BRIDGE__ADMIN, BRIDGE__L1_BRIDGE_ADDRESS, BRIDGE__L2_TOKEN_ADDRESS);
