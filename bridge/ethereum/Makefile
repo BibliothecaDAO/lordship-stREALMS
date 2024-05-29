@@ -13,7 +13,6 @@ sgr0 := $(shell tput sgr0)
 
 # Bridge deploy impl + proxy.
 bridge_deploy:
-	export BRIDGE_L1_PROXY_ADDRESS=0x0000000000000000000000000000000000000000 && \
 	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Bridge.s.sol:Deploy
 
 bridge_deposit:
