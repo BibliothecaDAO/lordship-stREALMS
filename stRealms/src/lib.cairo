@@ -1,8 +1,17 @@
-mod lordship;
+mod data {
+    mod metadata;
+}
 mod components {
     mod strealm;
     mod erc721 {
         mod extensions;
+    }
+}
+mod contracts {
+    mod strealm;
+    mod metadata {
+        mod metadata;
+        mod utils;
     }
 }
 

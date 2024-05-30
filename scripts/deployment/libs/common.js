@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { json } from "starknet";
 import { getNetwork, getAccount } from "./network.js";
+import colors from "colors";
 
 
 export const getContracts = (TARGET_PATH) => {
@@ -40,6 +41,12 @@ export const declare = async (filepath, contract_name) => {
   );
 
   const account = getAccount();
+  // console.log(
+  //   await account.estimateDeclareFee({
+  //     contract: compiledFile,
+  //     casm: compiledSierraCasmFile,
+  //   })
+  // );
   const contract = await account.declareIfNot({
     contract: compiledFile,
     casm: compiledSierraCasmFile,
@@ -60,3 +67,28 @@ export const declare = async (filepath, contract_name) => {
 
   return contract;
 };
+
+
+export const deploy = async (name, class_hash, constructorCalldata) => {
+  // Deploy contract
+  const account = getAccount();
+  console.log(`\nDeploying ${name} ... \n\n`.green);
+  let contract = await account.deployContract({
+    classHash: class_hash,
+    constructorCalldata: constructorCalldata,
+  });
+
+  // Wait for transaction
+  let network = getNetwork(process.env.STARKNET_NETWORK);
+  console.log(
+    "Tx hash: ".green,
+    `${network.explorer_url}/tx/${contract.transaction_hash})`
+  );
+  let a = await account.waitForTransaction(contract.transaction_hash);
+  console.log("Contract Address: ".green, contract.address, "\n\n");
+
+  return contract.address
+};
+
+
+  

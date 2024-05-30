@@ -7,7 +7,8 @@ version = "0.1.0"
 [dependencies]
 starknet = "2.6.3"
 openzeppelin = { git = "https://github.com/openzeppelin/cairo-contracts", rev = "e190e55" }
-
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag="cairo-v2.6.0" }
+graffiti = { git = "https://github.com/ponderingdemocritus/graffiti", rev = "bc569531791dbc71c6cd8d9bc154c34eedad31fe" }
 
 [dev-dependencies]
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.23.0" }

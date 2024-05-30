@@ -68,8 +68,10 @@ contract Deposit is Script {
 
         address proxyAddress = config.bridgeL1ProxyAddress;
 
-        uint256[] memory ids = new uint256[](1);
-        ids[0] = 55;
+        uint256[] memory ids = new uint256[](3);
+        ids[0] = 63;
+        ids[1] = 64;
+        ids[2] = 65;
 
         IERC721(config.l1TokenAddress).setApprovalForAll(proxyAddress, true);
         Bridge(payable(proxyAddress)).depositTokens{value: 50000}(

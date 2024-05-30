@@ -32,8 +32,13 @@ use strealm::components::strealm::StRealmComponent::InternalTrait as StRealmInte
 use strealm::components::strealm::StRealmComponent::{Flow, Stream};
 use strealm::components::strealm::StRealmComponent;
 use strealm::components::strealm::{IStRealmDispatcher, IStRealmDispatcherTrait};
-use strealm::lordship::Lordship;
-use strealm::lordship::{IERC721MinterBurnerDispatcher, IERC721MinterBurnerDispatcherTrait};
+use strealm::contracts::metadata::metadata::{
+    IRealmMetadataEncoded, IRealmMetadataEncodedDispatcher, IRealmMetadataEncodedDispatcherTrait
+};
+use strealm::contracts::strealm::StRealm;
+use strealm::contracts::strealm::{
+    IERC721MinterBurnerDispatcher, IERC721MinterBurnerDispatcherTrait
+};
 use strealm::tests::mocks::account_mock::DualCaseAccountMock;
 use strealm::tests::mocks::erc20_mock::DualCaseERC20Mock;
 
@@ -100,9 +105,34 @@ fn ERC20_MOCK() -> IERC20Dispatcher {
     return dispatcher;
 }
 
+fn REALM_METADATA() -> IRealmMetadataEncodedDispatcher {
+    let name_and_attrs_declared = declare("NameAndAttrsMetadata").unwrap();
+    let (name_and_attrs_address, _) = name_and_attrs_declared.deploy(@array![]).unwrap();
+
+    let url_part_a_declared = declare("URLPartAMetadata").unwrap();
+    let (url_part_a_address, _) = url_part_a_declared.deploy(@array![]).unwrap();
+
+    let url_part_b_declared = declare("URLPartBMetadata").unwrap();
+    let (url_part_b_address, _) = url_part_b_declared.deploy(@array![]).unwrap();
+
+    let realms_metadata_declared = declare("RealmMetadata").unwrap();
+    let realms_metadata_constructor: Array<felt252> = array![
+        get_class_hash(name_and_attrs_address).into(),
+        get_class_hash(url_part_a_address).into(),
+        get_class_hash(url_part_b_address).into(),
+    ];
+
+    let (realms_metadata_address, _) = realms_metadata_declared
+        .deploy(@realms_metadata_constructor)
+        .unwrap();
+
+    let dispatcher = IRealmMetadataEncodedDispatcher { contract_address: realms_metadata_address };
+    return dispatcher;
+}
+
 
 fn DEPLOY_LORDSHIP_CONTRACT() -> ContractAddress {
-    let lordship_contract = declare("Lordship").unwrap();
+    let lordship_contract = declare("StRealm").unwrap();
 
     let mut constructor_calldata = array![];
     DEFAULT_ADMIN().serialize(ref constructor_calldata);
@@ -111,6 +141,7 @@ fn DEPLOY_LORDSHIP_CONTRACT() -> ContractAddress {
     FLOW_RATE().serialize(ref constructor_calldata);
     REWARD_TOKEN().serialize(ref constructor_calldata);
     REWARD_PAYER().serialize(ref constructor_calldata);
+    REALM_METADATA().serialize(ref constructor_calldata);
 
     let (contract_address, _) = lordship_contract.deploy(@constructor_calldata).unwrap();
 
@@ -130,9 +161,9 @@ fn test_constructor() {
     let access_control_dispatcher = AccessControlABIDispatcher {
         contract_address: lordship_address
     };
-    assert!(access_control_dispatcher.has_role(Lordship::DEFAULT_ADMIN_ROLE, DEFAULT_ADMIN()));
-    assert!(access_control_dispatcher.has_role(Lordship::MINTER_ROLE, MINTER()));
-    assert!(access_control_dispatcher.has_role(Lordship::UPGRADER_ROLE, UPGRADER()));
+    assert!(access_control_dispatcher.has_role(StRealm::DEFAULT_ADMIN_ROLE, DEFAULT_ADMIN()));
+    assert!(access_control_dispatcher.has_role(StRealm::MINTER_ROLE, MINTER()));
+    assert!(access_control_dispatcher.has_role(StRealm::UPGRADER_ROLE, UPGRADER()));
 
     // ensure erc721 was initialized properly
     let erc721_dispatcher = ERC721ABIDispatcher { contract_address: lordship_address };
@@ -600,3 +631,52 @@ fn test_update_hook() {
         + ((3 + 1) * second_num_seconds_passed.into() * FLOW_RATE().into());
     assert_eq!(strealm_dispatcher.get_reward_balance(), new_expected_person_B_balance);
 }
+
+
+#[test]
+fn test_metadata() {
+    ///  Ensure metadata works correctly
+
+    let mut lordship_address = DEPLOY_LORDSHIP_CONTRACT();
+    start_prank(CheatTarget::One(lordship_address), MINTER());
+    let erc721_minter_dispatcher = IERC721MinterBurnerDispatcher {
+        contract_address: lordship_address
+    };
+
+    let (person_A, _) = ACCOUNT_MOCK_ADDRESSES();
+
+    // mint tokens to person_A
+    let token_id = 1;
+    erc721_minter_dispatcher.safe_mint(person_A, token_id, array![].span());
+    let token_uri = ERC721ABIDispatcher { contract_address: lordship_address }.token_uri(token_id);
+    assert_eq!(
+        token_uri,
+        "data:application/json;base64,eyJuYW1lIjoiU3RvbHNsaSIsImltYWdlIjoiaHR0cHM6Ly9nYXRld2F5LnBpbmF0YS5jbG91ZC9pcGZzL1FtVlZ3cDdvZXVEOWY1RnZDWTVDM2pvODYzbTJMVHpzWmVjWThOWHd2eHVrVWQiLCJhdHRyaWJ1dGVzIjpbeyJ0cmFpdF90eXBlIjoiUmVnaW9ucyIsInZhbHVlIjoiNiJ9LHsidHJhaXRfdHlwZSI6IkNpdGllcyIsInZhbHVlIjoiOCJ9LHsidHJhaXRfdHlwZSI6IkhhcmJvcnMiLCJ2YWx1ZSI6IjE3In0seyJ0cmFpdF90eXBlIjoiUml2ZXJzIiwidmFsdWUiOiIyNiJ9LHsidHJhaXRfdHlwZSI6IlJlc291cmNlIiwidmFsdWUiOiJTdG9uZSJ9LHsidHJhaXRfdHlwZSI6IlJlc291cmNlIiwidmFsdWUiOiJDb2FsIn0seyJ0cmFpdF90eXBlIjoiT3JkZXIiLCJ2YWx1ZSI6IlRoZSBPcmRlciBvZiBHaWFudHMifV19"
+    );
+
+    // mint tokens to person_A
+    let token_id = 87;
+    erc721_minter_dispatcher.safe_mint(person_A, token_id, array![].span());
+    let token_uri = ERC721ABIDispatcher { contract_address: lordship_address }.token_uri(token_id);
+    assert_eq!(
+        token_uri,
+        "data:application/json;base64,eyJuYW1lIjoiR2lzbGVnb2IiLCJpbWFnZSI6Imh0dHBzOi8vZ2F0ZXdheS5waW5hdGEuY2xvdWQvaXBmcy9RbVVNcEhweDRvUjhyejdpZ29XR3hSeEF6NnVTa1Fva0pjbUYyc01WRnVycHplIiwiYXR0cmlidXRlcyI6W3sidHJhaXRfdHlwZSI6IlJlZ2lvbnMiLCJ2YWx1ZSI6IjUifSx7InRyYWl0X3R5cGUiOiJDaXRpZXMiLCJ2YWx1ZSI6IjYifSx7InRyYWl0X3R5cGUiOiJIYXJib3JzIiwidmFsdWUiOiIxMCJ9LHsidHJhaXRfdHlwZSI6IlJpdmVycyIsInZhbHVlIjoiMzQifSx7InRyYWl0X3R5cGUiOiJSZXNvdXJjZSIsInZhbHVlIjoiQ29hbCJ9LHsidHJhaXRfdHlwZSI6IldvbmRlciIsInZhbHVlIjoiVGhlIEV0ZXJuYWwgT3JjaGFyZCJ9LHsidHJhaXRfdHlwZSI6Ik9yZGVyIiwidmFsdWUiOiJUaGUgT3JkZXIgb2YgdGhlIFR3aW5zIn1dfQ=="
+    );
+
+    let token_id = 8000;
+    erc721_minter_dispatcher.safe_mint(person_A, token_id, array![].span());
+    let token_uri = ERC721ABIDispatcher { contract_address: lordship_address }.token_uri(token_id);
+    assert_eq!(
+        token_uri,
+        "data:application/json;base64,eyJuYW1lIjoiS2lsdmtpcGtpbHYiLCJpbWFnZSI6Imh0dHBzOi8vZ2F0ZXdheS5waW5hdGEuY2xvdWQvaXBmcy9RbWVDbzR6ejg4dVZlMjd3anpDeE04dWJvc1RISExxZzYzQXVMWHJRSGFNOHdYIiwiYXR0cmlidXRlcyI6W3sidHJhaXRfdHlwZSI6IlJlZ2lvbnMiLCJ2YWx1ZSI6IjcifSx7InRyYWl0X3R5cGUiOiJDaXRpZXMiLCJ2YWx1ZSI6IjgifSx7InRyYWl0X3R5cGUiOiJIYXJib3JzIiwidmFsdWUiOiIxOCJ9LHsidHJhaXRfdHlwZSI6IlJpdmVycyIsInZhbHVlIjoiNDAifSx7InRyYWl0X3R5cGUiOiJSZXNvdXJjZSIsInZhbHVlIjoiU2lsdmVyIn0seyJ0cmFpdF90eXBlIjoiUmVzb3VyY2UiLCJ2YWx1ZSI6Ildvb2QifSx7InRyYWl0X3R5cGUiOiJSZXNvdXJjZSIsInZhbHVlIjoiQ29wcGVyIn0seyJ0cmFpdF90eXBlIjoiUmVzb3VyY2UiLCJ2YWx1ZSI6IlJ1YnkifSx7InRyYWl0X3R5cGUiOiJSZXNvdXJjZSIsInZhbHVlIjoiQ29hbCJ9LHsidHJhaXRfdHlwZSI6Ik9yZGVyIiwidmFsdWUiOiJUaGUgT3JkZXIgb2YgUHJvdGVjdGlvbiJ9XX0="
+    );
+
+    let token_id = 71;
+    erc721_minter_dispatcher.safe_mint(person_A, token_id, array![].span());
+    let token_uri = ERC721ABIDispatcher { contract_address: lordship_address }.token_uri(token_id);
+    assert_eq!(
+        token_uri,
+        "data:application/json;base64,eyJuYW1lIjoiUGVtJ2FwIFBpJyIsImltYWdlIjoiaHR0cHM6Ly9nYXRld2F5LnBpbmF0YS5jbG91ZC9pcGZzL1FtV2kySm5BdmNmRGhjY21uUUdUYUw4YlY3R0ZWQkIxUWU0MWNXVWlmcVNHWWMiLCJhdHRyaWJ1dGVzIjpbeyJ0cmFpdF90eXBlIjoiUmVnaW9ucyIsInZhbHVlIjoiNCJ9LHsidHJhaXRfdHlwZSI6IkNpdGllcyIsInZhbHVlIjoiMjEifSx7InRyYWl0X3R5cGUiOiJIYXJib3JzIiwidmFsdWUiOiI4In0seyJ0cmFpdF90eXBlIjoiUml2ZXJzIiwidmFsdWUiOiIyOCJ9LHsidHJhaXRfdHlwZSI6IlJlc291cmNlIiwidmFsdWUiOiJTdG9uZSJ9LHsidHJhaXRfdHlwZSI6IlJlc291cmNlIiwidmFsdWUiOiJPYnNpZGlhbiJ9LHsidHJhaXRfdHlwZSI6IlJlc291cmNlIiwidmFsdWUiOiJHb2xkIn0seyJ0cmFpdF90eXBlIjoiT3JkZXIiLCJ2YWx1ZSI6IlRoZSBPcmRlciBvZiBHaWFudHMifV19"
+    );
+}
+

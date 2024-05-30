@@ -37,7 +37,10 @@ mod bridge {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, bridge_admin: ContractAddress, l1_bridge_address: EthAddress, l2_token_address: ContractAddress
+        ref self: ContractState,
+        bridge_admin: ContractAddress,
+        l1_bridge_address: EthAddress,
+        l2_token_address: ContractAddress
     ) {
         self.ownable.initializer(bridge_admin);
         self.l1_bridge_address.write(l1_bridge_address);
@@ -76,9 +79,7 @@ mod bridge {
         loop {
             match token_ids.pop_front() {
                 Option::Some(token_id) => {
-                    IERC721MinterBurnerDispatcher {
-                        contract_address: self.l2_token_address.read()
-                    }
+                    IERC721MinterBurnerDispatcher { contract_address: self.l2_token_address.read() }
                         .safe_mint(req.owner_l2, *token_id, array![].span());
                 },
                 Option::None => { break; }
@@ -137,7 +138,6 @@ mod bridge {
         fn deposit_tokens(
             ref self: ContractState, salt: felt252, owner_l1: EthAddress, token_ids: Span<u256>,
         ) {
-
             assert!(token_ids.len() > 0, "no token id");
             assert!(owner_l1.is_non_zero(), "owner l1 address is zero");
 
@@ -150,7 +150,10 @@ mod bridge {
                 match ids.pop_front() {
                     Option::Some(token_id) => {
                         // ensure caller has permission to spend token
-                        _is_token_approved_or_owner(erc721_dispatcher, from, *token_id);
+                        assert!(
+                            _is_token_approved_or_owner(erc721_dispatcher, from, *token_id),
+                            "Caller not owner or approved"
+                        );
 
                         // burn token
                         IERC721MinterBurnerDispatcher {
@@ -163,9 +166,7 @@ mod bridge {
             };
 
             let req = Request {
-                hash: compute_request_hash(
-                    salt, self.l2_token_address.read(), owner_l1, token_ids
-                ),
+                hash: compute_request_hash(salt, self.l2_token_address.read(), owner_l1, token_ids),
                 owner_l1,
                 owner_l2: starknet::get_caller_address(),
                 ids: token_ids,
