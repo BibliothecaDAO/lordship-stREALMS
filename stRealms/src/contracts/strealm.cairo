@@ -25,9 +25,9 @@ trait IERC721MinterBurner<TState> {
 }
 
 #[starknet::interface]
-trait IRealmMetadataLibClassHash<TState> {
-    fn get_metadata_lib_class_hash(self: @TState) -> starknet::ClassHash;
-    fn set_metadata_lib_class_hash(ref self: TState, class_hash: starknet::ClassHash);
+trait IRealmMetadata<TState> {
+    fn get_metadata_address(self: @TState) -> starknet::ContractAddress;
+    fn set_metadata_address(ref self: TState, contract_address: starknet::ContractAddress);
 }
 
 #[starknet::contract]
@@ -48,11 +48,10 @@ mod StRealm {
     use strealm::components::erc721::extensions::ERC721VotesComponent;
     use strealm::components::strealm::StRealmComponent::InternalTrait as StRealmInternalTrait;
     use strealm::components::strealm::StRealmComponent;
-    use strealm::contracts::metadata::metadata::IRealmMetadataEncodedDispatcherTrait;
     use strealm::contracts::metadata::metadata::{
-        IRealmMetadataEncoded, IRealmMetadataEncodedLibraryDispatcher
+        IRealmMetadataEncoded, IRealmMetadataEncodedDispatcher, IRealmMetadataEncodedDispatcherTrait
     };
-    use super::{IERC721MinterBurner, IRealmMetadataLibClassHash};
+    use super::{IERC721MinterBurner, IRealmMetadata};
     use super::{MINTER_ROLE, UPGRADER_ROLE};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -115,7 +114,7 @@ mod StRealm {
         nonces: NoncesComponent::Storage,
         #[substorage(v0)]
         strealm: StRealmComponent::Storage,
-        StRealm_metadata_lib: IRealmMetadataEncodedLibraryDispatcher
+        StRealm_metadata_contract: IRealmMetadataEncodedDispatcher
     }
 
     #[event]
@@ -169,7 +168,7 @@ mod StRealm {
         fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
             self.erc721._require_owned(token_id);
             let id: u16 = token_id.try_into().unwrap();
-            self.StRealm_metadata_lib.read().get_decoded_metadata(id)
+            self.StRealm_metadata_contract.read().get_decoded_metadata(id)
         }
     }
 
@@ -183,25 +182,28 @@ mod StRealm {
 
     #[abi(embed_v0)]
     impl RealmMetadataEncoded of IRealmMetadataEncoded<ContractState> {
-        fn get_encoded_metadata(self: @ContractState, token_id: u16) -> felt252 {
-            self.StRealm_metadata_lib.read().get_encoded_metadata(token_id)
+        fn get_encoded_metadata(
+            self: @ContractState, token_id: u16
+        ) -> (felt252, felt252, felt252) {
+            self.StRealm_metadata_contract.read().get_encoded_metadata(token_id)
         }
-
         fn get_decoded_metadata(self: @ContractState, token_id: u16) -> ByteArray {
-            self.StRealm_metadata_lib.read().get_decoded_metadata(token_id)
+            self.StRealm_metadata_contract.read().get_decoded_metadata(token_id)
         }
     }
 
 
     #[abi(embed_v0)]
-    impl RealmMetadataLibClassHash of IRealmMetadataLibClassHash<ContractState> {
-        fn get_metadata_lib_class_hash(self: @ContractState) -> ClassHash {
-            self.StRealm_metadata_lib.read().class_hash
+    impl RealmMetadata of IRealmMetadata<ContractState> {
+        fn get_metadata_address(self: @ContractState) -> ContractAddress {
+            self.StRealm_metadata_contract.read().contract_address
         }
 
-        fn set_metadata_lib_class_hash(ref self: ContractState, class_hash: ClassHash) {
+        fn set_metadata_address(ref self: ContractState, contract_address: ContractAddress) {
             self.access_control.assert_only_role(DEFAULT_ADMIN_ROLE);
-            self.StRealm_metadata_lib.write(IRealmMetadataEncodedLibraryDispatcher { class_hash })
+            self
+                .StRealm_metadata_contract
+                .write(IRealmMetadataEncodedDispatcher { contract_address })
         }
     }
 
@@ -321,7 +323,7 @@ mod StRealm {
         flow_rate: u256,
         reward_token: ContractAddress,
         reward_payer: ContractAddress,
-        metadata_lib_class_hash: ClassHash
+        metadata_addr: ContractAddress
     ) {
         self.erc721.initializer("Staked Realm", "stREALM", "");
         self.strealm.initializer(:flow_rate, :reward_token, :reward_payer);
@@ -332,7 +334,7 @@ mod StRealm {
         self.access_control._grant_role(UPGRADER_ROLE, upgrader);
 
         self
-            .StRealm_metadata_lib
-            .write(IRealmMetadataEncodedLibraryDispatcher { class_hash: metadata_lib_class_hash })
+            .StRealm_metadata_contract
+            .write(IRealmMetadataEncodedDispatcher { contract_address: metadata_addr })
     }
 }

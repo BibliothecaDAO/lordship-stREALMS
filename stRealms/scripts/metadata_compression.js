@@ -1,11 +1,10 @@
-const { assert } = require("console");
 const fs = require("fs");
 const path = require("path");
-
+const assert = require("assert").strict;
 // Define paths to the input and output files
 const inputFilePath = path.join(__dirname, "metadata_original.json");
 const outputFilePath = path.join(__dirname, "metadata_compressed.json");
-const cairoFilePath = path.join(__dirname, "..", "src", "metadata.cairo");
+const cairoFilePath = path.join(__dirname, "..", "src","data", "metadata.cairo");
 
 // Character map for transliteration to ASCII
 const charMap = {
@@ -74,12 +73,35 @@ const generateMappingFunction = (mapping, name) => {
 
 // Function to generate mapping function string for Cairo
 const generateCompressDataFunction = (jsonData) => {
-  let functionString = `fn compressed_metadata(token_id: felt252) -> felt252 {\n    match token_id {\n`;
+
+  // create function to access compressed name and attributes
+  let functionString = `fn compressed_name_and_attrs(token_id: felt252) -> felt252 {\n    match token_id {\n`;
   functionString += `        0 => panic!("zero token id"), \n`;
   for (const [key, value] of Object.entries(jsonData)) {
-    functionString += `        ${key} => ${value["serialized"]},\n`;
+    functionString += `        ${key} => ${value["serialized"]["name_and_attrs_felt"]},\n`;
   }
   functionString += `        _ => panic!("max token id exceeded")\n    }\n}`;
+
+
+
+  // create function to access the first part of the compressed url
+  functionString += `\n\n\n fn compressed_url_first(token_id: felt252) -> felt252 {\n    match token_id {\n`;
+  functionString += `        0 => panic!("zero token id"), \n`;
+  for (const [key, value] of Object.entries(jsonData)) {
+    functionString += `        ${key} => ${value["serialized"]["url_felt"][0]},\n`;
+  }
+  functionString += `        _ => panic!("max token id exceeded")\n    }\n}`;
+
+  
+  // create function to access the second part of the compressed url
+  functionString += `\n\n\n fn compressed_url_second(token_id: felt252) -> felt252 {\n    match token_id {\n`;
+  functionString += `        0 => panic!("zero token id"), \n`;
+  for (const [key, value] of Object.entries(jsonData)) {
+    functionString += `        ${key} => ${value["serialized"]["url_felt"][1]},\n`;
+  }
+  functionString += `        _ => panic!("max token id exceeded")\n    }\n}`;
+
+  
   return functionString;
 };
 
@@ -248,11 +270,20 @@ fs.readFile(inputFilePath, "utf8", (err, data) => {
     const item = jsonData[key];
 
     let name = item.shift();
+    name = transliterate(name);
     let name_felt = strToFeltArr(name)[0];
     assert(name.length <= max_name_len);
 
     // remove url. var unused
-    let _ = item.shift();
+    let url = item.shift();
+    let url_length = 46;
+    assert(url.length == url_length);
+
+    let half_url_length = 46 / 2; 
+    let url_split_first = url.slice(0, half_url_length);
+    let url_split_second = url.slice(half_url_length);
+    let url_felt = [strToFeltArr(url_split_first)[0],strToFeltArr(url_split_second)[0]];
+
 
     // the remaining items are attrs
     let attrs_len = item.length;
@@ -262,17 +293,17 @@ fs.readFile(inputFilePath, "utf8", (err, data) => {
     // final felt should be the compress (name, attrs,name.length, attrs_len) which
     // should have maximum bytes of (max_name_len,max_attrs_len,1,1)
 
-    let final_felt =
+    let name_and_attrs_felt =
       (((((BigInt(name_felt) << BigInt(attrs_len * 8)) | BigInt(attrs_felt)) <<
         BigInt(8)) |
         BigInt(name.length)) <<
         BigInt(8)) |
       BigInt(attrs_len);
-    final_felt = `0x${final_felt.toString(16)}`;
+    name_and_attrs_felt = `0x${name_and_attrs_felt.toString(16)}`;
 
     jsonData[key] = {
-      deserialized: [transliterate(name), attrs_felt],
-      serialized: [final_felt],
+      deserialized: { name: name, attrs_felt, url: url_felt },
+      serialized: { name_and_attrs_felt, url_felt },
     };
   }
 
@@ -314,4 +345,3 @@ fs.readFile(inputFilePath, "utf8", (err, data) => {
     }
   );
 });
-// "‘illo‘‘i‘‘i‘";

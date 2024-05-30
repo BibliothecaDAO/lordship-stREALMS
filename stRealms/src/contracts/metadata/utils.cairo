@@ -1,11 +1,14 @@
 use alexandria_encoding::base64::get_base64_char_set;
 use alexandria_math::{BitShift, pow};
+use core::byte_array::ByteArrayTrait;
 use graffiti::json::Builder;
 use graffiti::json::JsonImpl;
 
 const BYTE_LEN: u256 = 8; // a byte is 8 bits
 const MASK_1_BYTE: u256 = 0xff;
 const MASK_2_BYTES: u256 = 0xffff;
+
+const URL_PART_LEN: u32 = 23; // i.e 46 /2
 
 fn encoded_attributes_to_array(mut value: u256) -> Span<u8> {
     let mut res: Array<u8> = array![];
@@ -20,16 +23,18 @@ fn encoded_attributes_to_array(mut value: u256) -> Span<u8> {
 }
 
 
-fn make_json_and_base64_encode_metadata(metadata: felt252) -> ByteArray {
-    let original_metadata: u256 = metadata.into();
+fn make_json_and_base64_encode_metadata(
+    name_and_attrs: felt252, url: (felt252, felt252)
+) -> ByteArray {
+    let original_name_and_attrs: u256 = name_and_attrs.into();
 
-    let attrs_len: u256 = original_metadata & MASK_1_BYTE;
+    let attrs_len: u256 = original_name_and_attrs & MASK_1_BYTE;
 
-    // remove name length and attrs length from metadata
-    let metadata_only: u256 = BitShift::shr(original_metadata, 2 * BYTE_LEN);
+    // remove name length and attrs length from name_and_attrs
+    let name_and_attrs_only: u256 = BitShift::shr(original_name_and_attrs, 2 * BYTE_LEN);
 
     let attrs_mask: u256 = pow(2, BYTE_LEN * attrs_len) - 1;
-    let attributes: u256 = metadata_only & attrs_mask;
+    let attributes: u256 = name_and_attrs_only & attrs_mask;
 
     let mut attrs_arr: Span<u8> = encoded_attributes_to_array(attributes);
     let region = attrs_arr.pop_front().unwrap();
@@ -96,13 +101,23 @@ fn make_json_and_base64_encode_metadata(metadata: felt252) -> ByteArray {
                 .build()
         );
 
-    let name: u256 = BitShift::shr(metadata_only, BYTE_LEN * attrs_len);
+    // create name
+    let name: u256 = BitShift::shr(name_and_attrs_only, BYTE_LEN * attrs_len);
     let mut name_str: ByteArray = "";
-    let name_len: u256 = BitShift::shr(original_metadata, BYTE_LEN) & MASK_1_BYTE;
+    let name_len: u256 = BitShift::shr(original_name_and_attrs, BYTE_LEN) & MASK_1_BYTE;
     name_str.append_word(name.try_into().unwrap(), name_len.try_into().unwrap());
 
-    let metadata = JsonImpl::new().add("name", name_str).add_array("attributes", attrs.span());
+    // create url
+    let (url_part_a, url_part_b) = url;
+    let mut url_str: ByteArray = "";
+    url_str.append_word(url_part_a, URL_PART_LEN);
+    url_str.append_word(url_part_b, URL_PART_LEN);
 
+    // construct full metadata
+    let metadata = JsonImpl::new()
+        .add("name", name_str)
+        .add("image", format!("https://gateway.pinata.cloud/ipfs/{}", url_str))
+        .add_array("attributes", attrs.span());
     format!("data:application/json;base64,{}", bytes_base64_encode(metadata.build()))
 }
 
