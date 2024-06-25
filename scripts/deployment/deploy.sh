@@ -33,5 +33,5 @@ node finishL2Deploy
 ############ STEPS AFTER RUNNING SCRIPT ############
 
 
-# ensure STREALM_REWARD_PAYER approves enough $lords to the l2 bridge 
+# ensure STREALM_REWARD_PAYER approves enough $lords to the l2 strealm contract 
 # so that users can claim lords
