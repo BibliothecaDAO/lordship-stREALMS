@@ -12,8 +12,8 @@ sgr0 := $(shell tput sgr0)
 # TODO: for upgrades, check how to force proxy arg.
 
 # Bridge deploy impl + proxy.
-bridge_deploy:
-	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Bridge.s.sol:Deploy
+bridge_l1_deploy:
+	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Bridge.s.sol:Deploy -vvvvvvvv
 
 bridge_deposit:
 	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Bridge.s.sol:Deposit

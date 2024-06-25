@@ -7,6 +7,7 @@ import "./Utils.sol";
 import "../src/Bridge.sol";
 import "../src/sn/Cairo.sol";
 import "../src/sn/StarknetMessagingLocal.sol";
+import "../test/token/ERC721MintFree.sol";
 
 import "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
@@ -21,11 +22,12 @@ contract Deploy is Script {
         vm.startBroadcast(config.deployerPrivateKey);
 
         address snCoreAddress = config.starknetCoreAddress;
-        if (snCoreAddress == address(0x0)) {
-            snCoreAddress = address(new StarknetMessagingLocal());
-        }
 
-        address impl = address(new Bridge());
+        string memory l2BridgePath = string.concat(vm.envString("LOCAL_LOGS"),"l2_bridge.json");
+        string memory fileContent = vm.readFile(l2BridgePath);
+        bytes32 l2BridgeAddressBytes = abi.decode(vm.parseJson(fileContent, ".address"), (bytes32));
+        uint256 l2BridgeAddress = uint256(l2BridgeAddressBytes);
+
 
         bytes memory dataInit = abi.encodeWithSelector(
             Bridge.initialize.selector,
@@ -33,28 +35,23 @@ contract Deploy is Script {
                 config.ownerAddress,
                 config.l1TokenAddress,
                 config.starknetCoreAddress,
-                config.l2BridgeAddress,
+                l2BridgeAddress,
                 config.l2BridgeSelector
             )
         );
+        address impl = address(new Bridge());
+        address proxyAddress = address(new ERC1967Proxy(impl, dataInit));
 
-        address proxyAddress = config.bridgeL1ProxyAddress;
-
-        // Depending on the configuration, the proxy is also deployed.
-        // If already deployed, only upgrade and call to initialize function.
-        if (proxyAddress == address(0x0)) {
-            proxyAddress = address(new ERC1967Proxy(impl, dataInit));
-        } else {
-            Bridge(payable(proxyAddress)).upgradeToAndCall(impl, dataInit);
-        }
+        // upgrade 
+        // Bridge(payable(proxyAddress)).upgradeToAndCall(impl, dataInit);
 
         vm.stopBroadcast();
 
-        string memory json = "bridge_deploy";
+        string memory json = "l1_bridge";
         vm.serializeString(json, "proxy_address", vm.toString(proxyAddress));
         vm.serializeString(json, "impl_address", vm.toString(impl));
         vm.serializeString(json, "sncore_address", vm.toString(snCoreAddress));
-        Utils.writeJson(json, "bridge_deploy.json");
+        Utils.writeJson(json, "l1_bridge.json");
     }
 }
 
@@ -66,12 +63,19 @@ contract Deposit is Script {
 
         vm.startBroadcast(config.deployerPrivateKey);
 
-        address proxyAddress = config.bridgeL1ProxyAddress;
+        ERC721MintFree(config.l1TokenAddress)
+            .mintRangeFree(config.deployerAddress, 4, 6);
+
 
         uint256[] memory ids = new uint256[](3);
-        ids[0] = 63;
-        ids[1] = 64;
-        ids[2] = 65;
+        ids[0] = 4;
+        ids[1] = 5;
+        ids[2] = 6;
+
+        string memory l1BridgePath = string.concat(vm.envString("LOCAL_LOGS"),"l1_bridge.json");
+        string memory fileContent = vm.readFile(l1BridgePath);
+        bytes32 l1BridgeAddressBytes = abi.decode(vm.parseJson(fileContent, ".data.proxy_address"), (bytes32));
+        address proxyAddress =address(uint160(uint256(l1BridgeAddressBytes)));
 
         IERC721(config.l1TokenAddress).setApprovalForAll(proxyAddress, true);
         Bridge(payable(proxyAddress)).depositTokens{value: 50000}(

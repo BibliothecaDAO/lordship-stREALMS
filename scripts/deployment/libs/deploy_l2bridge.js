@@ -1,8 +1,7 @@
 import "dotenv/config";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { getNetwork, getAccount } from "./network.js";
-import { declare, getPath } from "./common.js";
+import { declare, getContractPath, deploy } from "./common.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,56 +18,57 @@ const TARGET_PATH = path.join(
 
 
 
-
-export const deploy = async (
-  BRIDGE_ADMIN,
-  BRIDGE_L1_BRIDGE_ADDRESS,
-  BRIDGE_L2_TOKEN_ADDRESS
-) => {
+export const deployl2Bridge = async () => {
   ///////////////////////////////////////////
   ////////    L2 Bridge         /////////////
   ///////////////////////////////////////////
 
-  // Load account
-  const account = getAccount();
+  let BRIDGE__ADMIN = BigInt(process.env.BRIDGE_L2_ADMIN);
+  let BRIDGE__L1_BRIDGE_ADDRESS = 0x0;
+  let BRIDGE__L2_TOKEN_ADDRESS = 0x0;
 
   // declare contract
-  let realName = "Bridge L2 Contract";
+  let realName = "l2_bridge";
   let contractName = "bridge";
   const class_hash = (
-    await declare(getPath(TARGET_PATH, contractName), realName)
+    await declare(getContractPath(TARGET_PATH, contractName), realName)
   ).class_hash;
 
   let constructorCalldata = [
-    BRIDGE_ADMIN, 
-    BRIDGE_L1_BRIDGE_ADDRESS, 
-    BRIDGE_L2_TOKEN_ADDRESS
+    BRIDGE__ADMIN,
+    BRIDGE__L1_BRIDGE_ADDRESS,
+    BRIDGE__L2_TOKEN_ADDRESS,
   ];
 
-  // Deploy contract
-  console.log(`\nDeploying ${realName} ... \n\n`.green);
-  let contract = await account.deployContract({
-    classHash: class_hash,
-    constructorCalldata: constructorCalldata,
-  });
-
-  // Wait for transaction
-  let network = getNetwork(process.env.STARKNET_NETWORK);
-  console.log(
-    "Tx hash: ".green,
-    `${network.explorer_url}/tx/${contract.transaction_hash})`
-  );
-  let a = await account.waitForTransaction(contract.transaction_hash);
-  console.log("Contract Address: ".green, contract.address, "\n\n");
+  let contract_address = await deploy(realName, class_hash, constructorCalldata);
 };
 
 
+export const setl1AddressesInl2Bridge = async () => {
+  ///////////////////////////////////////////
+  ////////    Set L1 Addresses      /////////
+  ///////////////////////////////////////////
 
-export const deployl2Bridge = async () => {
-  let BRIDGE__ADMIN =
-    0x06a4d4e8c1cc9785e125195a2f8bd4e5b0c7510b19f3e2dd63533524f5687e41n;
-  let BRIDGE__L1_BRIDGE_ADDRESS = 0x79293120c28a4abe3c4afa2a1d4a9884fcf8326en;
-  let BRIDGE__L2_TOKEN_ADDRESS =
-    0x2b80629170ef5d194b661bc2a2cec1ec24acc47d36a40a1f88bf6aee3f986e5n;
-  await deploy(BRIDGE__ADMIN, BRIDGE__L1_BRIDGE_ADDRESS, BRIDGE__L2_TOKEN_ADDRESS);
+  let BRIDGE__ADMIN = BigInt(process.env.BRIDGE_L2_ADMIN);
+  let BRIDGE__L1_BRIDGE_ADDRESS = 0x0;
+  let BRIDGE__L2_TOKEN_ADDRESS = 0x0;
+
+  // declare contract
+  let realName = "l2_bridge";
+  let contractName = "bridge";
+  const class_hash = (
+    await declare(getContractPath(TARGET_PATH, contractName), realName)
+  ).class_hash;
+
+  let constructorCalldata = [
+    BRIDGE__ADMIN,
+    BRIDGE__L1_BRIDGE_ADDRESS,
+    BRIDGE__L2_TOKEN_ADDRESS,
+  ];
+
+  let contract_address = await deploy(
+    realName,
+    class_hash,
+    constructorCalldata
+  );
 };

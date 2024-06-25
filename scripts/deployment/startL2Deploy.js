@@ -9,7 +9,7 @@ const main = async () => {
   console.log(`  |____/|___|  _|_|___|_  |`.red);
   console.log(`            |_|       |___|`.red);
 
-  // await deployl2Bridge();
+  await deployl2Bridge();
   await deployStRealm();
 };
 

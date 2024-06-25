@@ -14,7 +14,6 @@ struct Config {
     address starknetCoreAddress;
     address bridgeL1ProxyAddress;
 
-    uint256 l2BridgeAddress;
     uint256 l2BridgeSelector;
 }
 
@@ -28,16 +27,15 @@ library Utils {
         VmSafe vm = VmSafe(HEVM_ADDRESS);
         
         return Config({
-            ownerAddress: vm.envAddress("OWNER_ADDRESS"),
-            l1TokenAddress: vm.envAddress("L1_TOKEN_ADDRESS"),
+            ownerAddress: vm.envAddress("BRIDGE_L1_OWNER_ADDRESS"),
+            l1TokenAddress: vm.envAddress("BRIDGE_L1_TOKEN_ADDRESS"),
             
-            deployerAddress: vm.envAddress("ACCOUNT_ADDRESS"),
-            deployerPrivateKey: vm.envUint("ACCOUNT_PRIVATE_KEY"),
+            deployerAddress: vm.envAddress("DEPLOYMENT_ACCOUNT_ADDRESS"),
+            deployerPrivateKey: vm.envUint("DEPLOYMENT_ACCOUNT_PRIVATE_KEY"),
 
             starknetCoreAddress: vm.envAddress("STARKNET_CORE_L1_ADDRESS"),
             bridgeL1ProxyAddress: vm.envAddress("BRIDGE_L1_PROXY_ADDRESS"),
-
-            l2BridgeAddress: vm.envUint("BRIDGE_L2_ADDRESS"),
+            
             l2BridgeSelector: vm.envUint("BRIDGE_L2_SELECTOR")
             });
     }

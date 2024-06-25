@@ -17,13 +17,13 @@ contract Deploy is Script {
         
         vm.startBroadcast(config.deployerPrivateKey);
 
-        address _address = address(new ERC721MintFree("Test Lord", "TLORD"));
+        address _address = address(new ERC721MintFree("Test Realm", "TREALM"));
     
         vm.stopBroadcast();
 
-        string memory json = "erc721_deploy";
+        string memory json = "l1_sepolia_erc721";
         vm.serializeString(json, "contract_address", vm.toString(_address));
-        Utils.writeJson(json, "erc721_deploy.json");
+        Utils.writeJson(json, "l1_sepolia_erc721.json");
     }
 }
 

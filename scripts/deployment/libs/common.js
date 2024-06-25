@@ -4,6 +4,7 @@ import * as path from "path";
 import { json } from "starknet";
 import { getNetwork, getAccount } from "./network.js";
 import colors from "colors";
+import { promisify } from "util";
 
 
 export const getContracts = (TARGET_PATH) => {
@@ -19,7 +20,7 @@ export const getContracts = (TARGET_PATH) => {
   return contracts;
 };
 
-export const getPath = (TARGET_PATH, contract_name) => {
+export const getContractPath = (TARGET_PATH, contract_name) => {
   const contracts = getContracts(TARGET_PATH);
   const c = contracts.find((contract) => contract.includes(contract_name));
   if (!c) {
@@ -87,8 +88,100 @@ export const deploy = async (name, class_hash, constructorCalldata) => {
   let a = await account.waitForTransaction(contract.transaction_hash);
   console.log("Contract Address: ".green, contract.address, "\n\n");
 
+  await writeDeploymentToFile(
+      name,
+      contract.address,
+      constructorCalldata
+    );
+
   return contract.address
 };
 
 
-  
+
+const mkdirAsync = promisify(fs.mkdir);
+const writeFileAsync = promisify(fs.writeFile);
+export const writeDeploymentToFile = async (
+  contractName,
+  address,
+  calldata
+) => {
+  try {
+    const folderPath = process.env.DEPLOYMENT_ADDRESSES_FOLDER;
+    await mkdirAsync(folderPath, { recursive: true });
+
+    const fileName = path.join(folderPath, `${contractName}.json`);
+
+    const data = {
+      address,
+      calldata,
+      deployed_at: Date.now(),
+      deployed_at_readable: new Date().toUTCString(),
+    };
+
+    // Convert BigInt to hex string
+    const jsonString = JSON.stringify(
+      data,
+      (key, value) => {
+        if (typeof value === "bigint") {
+          return "0x" + value.toString(16);
+        }
+        return value;
+      },
+      2
+    );
+
+    await writeFileAsync(fileName, jsonString);
+    console.log(`"${fileName}" has been saved or overwritten`);
+  } catch (err) {
+    console.error("Error writing file", err);
+    throw err; // Re-throw the error so the caller knows something went wrong
+  }
+};
+
+
+
+
+const readFileAsync = promisify(fs.readFile);
+
+export const getL2DeploymentAddress = async (contractName) => {
+  try {
+    const folderPath = process.env.DEPLOYMENT_ADDRESSES_FOLDER;
+    const fileName = path.join(folderPath, `${contractName}.json`);
+
+    const data = await readFileAsync(fileName, "utf8");
+    const jsonData = JSON.parse(data);
+
+    return jsonData.address;
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      console.error(`File not found: ${fileName}`);
+    } else if (err instanceof SyntaxError) {
+      console.error("Error parsing JSON:", err);
+    } else {
+      console.error("Error reading file:", err);
+    }
+    throw err; // Re-throw the error so the caller knows something went wrong
+  }
+};
+
+export const getL1DeploymentAddress = async (contractName) => {
+  try {
+    const folderPath = process.env.DEPLOYMENT_ADDRESSES_FOLDER;
+    const fileName = path.join(folderPath, `${contractName}.json`);
+
+    const data = await readFileAsync(fileName, "utf8");
+    const jsonData = JSON.parse(data);
+
+    return jsonData["data"]["proxy_address"];
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      console.error(`File not found: ${fileName}`);
+    } else if (err instanceof SyntaxError) {
+      console.error("Error parsing JSON:", err);
+    } else {
+      console.error("Error reading file:", err);
+    }
+    throw err; // Re-throw the error so the caller knows something went wrong
+  }
+};
