@@ -141,34 +141,31 @@ mod bridge {
             assert!(token_ids.len() > 0, "no token id");
             assert!(owner_l1.is_non_zero(), "owner l1 address is zero");
 
-            let from = starknet::get_caller_address();
+            let this = starknet::get_contract_address();
+            let l2_token = self.l2_token_address.read();
             let mut ids = token_ids;
-            let erc721_dispatcher = ERC721ABIDispatcher {
-                contract_address: self.l2_token_address.read()
+            let erc721_dispatcher = ERC721ABIDispatcher { contract_address: l2_token };
+            let erc721_burn_dispatcher = IERC721MinterBurnerDispatcher {
+                contract_address: l2_token
             };
             loop {
                 match ids.pop_front() {
                     Option::Some(token_id) => {
-                        // ensure caller has permission to spend token
-                        assert!(
-                            _is_token_approved_or_owner(erc721_dispatcher, from, *token_id),
-                            "Caller not owner or approved"
-                        );
+                        // transfer token to bridge contract 
+                        let owner = erc721_dispatcher.owner_of(*token_id);
+                        erc721_dispatcher.transfer_from(owner, this, *token_id);
 
                         // burn token
-                        IERC721MinterBurnerDispatcher {
-                            contract_address: self.l2_token_address.read()
-                        }
-                            .burn(*token_id);
+                        erc721_burn_dispatcher.burn(*token_id);
                     },
                     Option::None => { break; }
                 }
             };
 
             let req = Request {
-                hash: compute_request_hash(salt, self.l2_token_address.read(), owner_l1, token_ids),
+                hash: compute_request_hash(salt, l2_token, owner_l1, token_ids),
                 owner_l1,
-                owner_l2: starknet::get_caller_address(),
+                owner_l2: Zeroable::zero(),
                 ids: token_ids,
             };
 
@@ -187,23 +184,5 @@ mod bridge {
                     }
                 );
         }
-    }
-
-
-    // *** INTERNALS ***
-
-    /// Returns whether `spender` is allowed to manage `token_id`.
-    ///
-    /// Requirements:
-    ///
-    /// - `token_id` exists.
-    fn _is_token_approved_or_owner(
-        token_dispatcher: ERC721ABIDispatcher, spender: ContractAddress, token_id: u256
-    ) -> bool {
-        let owner = token_dispatcher.owner_of(token_id);
-        let is_approved_for_all = token_dispatcher.is_approved_for_all(owner, spender);
-        owner == spender
-            || is_approved_for_all
-            || spender == token_dispatcher.get_approved(token_id)
     }
 }

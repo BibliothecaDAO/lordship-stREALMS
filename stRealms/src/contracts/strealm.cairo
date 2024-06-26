@@ -299,7 +299,14 @@ mod StRealm {
     #[abi(embed_v0)]
     impl ERC721MinterBurnerImpl of IERC721MinterBurner<ContractState> {
         fn burn(ref self: ContractState, token_id: u256) {
+            // only allow the bridge call the burn function
             self.access_control.assert_only_role(MINTER_ROLE);
+
+            // ensure the token was received by the bridge
+            let burner = starknet::get_caller_address();
+            let owner = self.owner_of(token_id);
+            assert!(burner == owner, "StRealm: burner not owner");
+
             self.erc721._burn(token_id);
         }
 
@@ -309,6 +316,7 @@ mod StRealm {
             token_id: u256,
             data: Span<felt252>,
         ) {
+            // only allow the bridge call the mint function
             self.access_control.assert_only_role(MINTER_ROLE);
             self.erc721._safe_mint(recipient, token_id, data);
         }

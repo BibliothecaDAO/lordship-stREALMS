@@ -252,18 +252,28 @@ fn test_safe_mint_no_permission() {
 fn test_burn() {
     let mut lordship_address = DEPLOY_LORDSHIP_CONTRACT();
 
-    start_prank(CheatTarget::One(lordship_address), MINTER());
+    let (minter, _) = ACCOUNT_MOCK_ADDRESSES();
+    let mint_recipient = minter;
 
+    /////////
+    start_prank(CheatTarget::One(lordship_address), DEFAULT_ADMIN());
+    let access_control_dispatcher = AccessControlABIDispatcher {
+        contract_address: lordship_address
+    };
+    access_control_dispatcher.grant_role(StRealm::MINTER_ROLE, minter);
+    stop_prank(CheatTarget::One(lordship_address));
+    /////////
+
+    start_prank(CheatTarget::One(lordship_address), minter);
     let erc721_minter_dispatcher = IERC721MinterBurnerDispatcher {
         contract_address: lordship_address
     };
     let mint_token_id = 44_u256;
-    let (mint_recipient, _) = ACCOUNT_MOCK_ADDRESSES();
     let mint_data: Span<felt252> = array![].span();
     erc721_minter_dispatcher.safe_mint(mint_recipient, mint_token_id, mint_data);
     stop_prank(CheatTarget::One(lordship_address));
 
-    start_prank(CheatTarget::One(lordship_address), MINTER());
+    start_prank(CheatTarget::One(lordship_address), minter);
     erc721_minter_dispatcher.burn(mint_token_id);
     stop_prank(CheatTarget::One(lordship_address));
 
@@ -291,6 +301,28 @@ fn test_burn_no_permission() {
     // start_prank(CheatTarget::One(lordship_address), MINTER());
     erc721_minter_dispatcher.burn(mint_token_id);
 // stop_prank(CheatTarget::One(lordship_address));
+}
+
+
+#[test]
+#[should_panic(expected: ("StRealm: burner not owner",))]
+fn test_burn_burner_doesnt_own_token() {
+    let mut lordship_address = DEPLOY_LORDSHIP_CONTRACT();
+
+    start_prank(CheatTarget::One(lordship_address), MINTER());
+
+    let erc721_minter_dispatcher = IERC721MinterBurnerDispatcher {
+        contract_address: lordship_address
+    };
+    let mint_token_id = 44_u256;
+    let (mint_recipient, _) = ACCOUNT_MOCK_ADDRESSES();
+    let mint_data: Span<felt252> = array![].span();
+    erc721_minter_dispatcher.safe_mint(mint_recipient, mint_token_id, mint_data);
+    stop_prank(CheatTarget::One(lordship_address));
+
+    start_prank(CheatTarget::One(lordship_address), MINTER());
+    erc721_minter_dispatcher.burn(mint_token_id);
+    stop_prank(CheatTarget::One(lordship_address));
 }
 
 
