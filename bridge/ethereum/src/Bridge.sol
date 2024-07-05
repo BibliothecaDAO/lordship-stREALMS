@@ -18,10 +18,12 @@ import "./IBridgeEvent.sol";
 */
 contract Bridge is IBridgeEvent, UUPSOwnableProxied, BridgeState, BridgeEscrow {
 
+    error CallerNotTokenOwnerOrAdmin();
+
     /**
        @notice Initializes the implementation, only callable once.
 
-       @param data Data to init the implementation.
+       @param data Data to initialize the implementation.
     */
     function initialize( bytes calldata data) public onlyInit{
         (
@@ -90,13 +92,11 @@ contract Bridge is IBridgeEvent, UUPSOwnableProxied, BridgeState, BridgeEscrow {
         payable
     {
 
-        //todo @credence0x check if hash from msh consumption should be used
         _starknetCoreAddress.consumeMessageFromL2(
                 snaddress.unwrap(_l2BridgeAddress),
                 request
             );
             
-
         Request memory req = Protocol.requestDeserialize(request);
 
         _withdrawFromEscrow(_l1TokenAddress, req.ownerL1, req.tokenIds);
@@ -105,29 +105,35 @@ contract Bridge is IBridgeEvent, UUPSOwnableProxied, BridgeState, BridgeEscrow {
 
     }
 
-    //todo @credence0x should onlyAdmin be able to start cancellation?
     /**
         @notice Start the cancellation of a given request.
-     
+
         @param payload Request to cancel
         @param nonce Nonce used for request sending.
      */
     function startRequestCancellation(
         uint256[] memory payload,
         uint256 nonce
-    ) external onlyOwner {
+    ) external {
+
+        // ensure that the caller is the owner of the bridged tokens
+        // or the admin of the bridge
+        Request memory req = Protocol.requestDeserialize(payload);
+        if ((req.ownerL1 != _msgSender()) && (owner() != _msgSender())) {
+            revert CallerNotTokenOwnerOrAdmin();
+        }
+
         IStarknetMessaging(_starknetCoreAddress).startL1ToL2MessageCancellation(
             snaddress.unwrap(_l2BridgeAddress), 
             felt252.unwrap(_l2BridgeSelector), 
             payload,
             nonce
         );
-        Request memory req = Protocol.requestDeserialize(payload);
         emit CancelRequestStarted(req.hash, block.timestamp);
     }
 
     /**
-        @notice Cancel a given request.
+        @notice Final step to cancel failed brige attempt.
 
         @param payload Request to cancel
         @param nonce Nonce used for request sending.
