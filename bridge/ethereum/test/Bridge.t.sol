@@ -197,7 +197,29 @@ contract BridgeTest is Test, IBridgeEvent {
         assert(IERC721(erc721C1).ownerOf(ids[1]) == alice);
     }
 
-    function test_startRequestCancellation_onlyAdmin() public {
+    function test_startRequestCancellation_notAdminOrOwner() public {
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 0;
+        ids[1] = 9;
+
+        (uint256 nonce, uint256[] memory payload) = setupCancelRequest(alice, ids);
+        assert(IERC721(erc721C1).ownerOf(ids[0]) == bridge);
+        assert(IERC721(erc721C1).ownerOf(ids[1]) == bridge);
+
+        // bob does not own the tokens and is not admin
+        vm.startPrank(bob);
+        vm.expectRevert();
+        IBridge(bridge).startRequestCancellation(payload, nonce);
+        vm.stopPrank();
+
+        vm.expectRevert();
+        IBridge(bridge).cancelRequest(payload, nonce);
+
+        assert(IERC721(erc721C1).ownerOf(ids[0]) == bridge);
+        assert(IERC721(erc721C1).ownerOf(ids[1]) == bridge);
+    }
+
+    function test_startRequestCancellation_byTokenOwner() public {
         uint256[] memory ids = new uint256[](2);
         ids[0] = 0;
         ids[1] = 9;
@@ -207,13 +229,30 @@ contract BridgeTest is Test, IBridgeEvent {
         assert(IERC721(erc721C1).ownerOf(ids[1]) == bridge);
 
 
+        // alice owns tokens so it should not revert
         vm.startPrank(alice);
-        vm.expectRevert();
         IBridge(bridge).startRequestCancellation(payload, nonce);
         vm.stopPrank();
 
-        vm.expectRevert();
-        IBridge(bridge).cancelRequest(payload, nonce);
+        assert(IERC721(erc721C1).ownerOf(ids[0]) == bridge);
+        assert(IERC721(erc721C1).ownerOf(ids[1]) == bridge);
+    }
+
+    function test_startRequestCancellation_byAdmin() public {
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 0;
+        ids[1] = 9;
+
+        (uint256 nonce, uint256[] memory payload) = setupCancelRequest(alice, ids);
+        assert(IERC721(erc721C1).ownerOf(ids[0]) == bridge);
+        assert(IERC721(erc721C1).ownerOf(ids[1]) == bridge);
+
+
+        // admin call should not revert
+        address admin = address(this);
+        vm.startPrank(admin);
+        IBridge(bridge).startRequestCancellation(payload, nonce);
+        vm.stopPrank();
 
         assert(IERC721(erc721C1).ownerOf(ids[0]) == bridge);
         assert(IERC721(erc721C1).ownerOf(ids[1]) == bridge);
