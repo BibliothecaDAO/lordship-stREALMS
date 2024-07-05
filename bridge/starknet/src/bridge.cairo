@@ -128,10 +128,24 @@ mod bridge {
         ///
         /// # Arguments
         ///
-        /// * `salt` - Randome salt to compute request hash.
-        /// * `owner_l1` - Address of the owner on L1.
-        /// * `tokens_ids` - Tokens to be bridged on L1.
-        ///
+        /// * `salt` - Random salt to compute request hash.
+        /// * `owner_l1` - Receiver on L1 Ethereum address.
+        /// * `tokens_ids` - Tokens to be bridged to L1.
+        /// 
+        /// Note: the caller must have given this contract the necessary approval to spend
+        ///       the tokens on L2. and the caller must be the token owner.
+        ///         
+        ///        we want only the owner of the token to be able to call this function
+        ///        to prevent the following scenerio  
+        ///              - user approves bridge
+        ///              - attacker calls this function with the user's token id and 
+        ///                 the attacker's l1 address
+        ///              - user's token is burned
+        ///              - attacker is the owner of the token on l1
+        /// 
+        ///         this is achieved by using transfer_from(caller, this, *token_id)
+        ///         instead of transfer_from(owner, this, *token_id)
+        /// 
         fn deposit_tokens(
             ref self: ContractState, salt: felt252, owner_l1: EthAddress, token_ids: Span<u256>,
         ) {
@@ -139,6 +153,7 @@ mod bridge {
             assert!(owner_l1.is_non_zero(), "owner l1 address is zero");
 
             let this = starknet::get_contract_address();
+            let caller = starknet::get_caller_address();
             let l2_token = self.l2_token_address.read();
             let mut ids = token_ids;
             let erc721_dispatcher = ERC721ABIDispatcher { contract_address: l2_token };
@@ -149,8 +164,7 @@ mod bridge {
                 match ids.pop_front() {
                     Option::Some(token_id) => {
                         // transfer token to bridge contract 
-                        let owner = erc721_dispatcher.owner_of(*token_id);
-                        erc721_dispatcher.transfer_from(owner, this, *token_id);
+                        erc721_dispatcher.transfer_from(caller, this, *token_id);
 
                         // burn token
                         erc721_burn_dispatcher.burn(*token_id);
