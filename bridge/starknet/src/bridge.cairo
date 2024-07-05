@@ -67,13 +67,10 @@ mod bridge {
     /// `from_address` - L1 sender address, must be Realms L1 Bridge.
     /// `req` - The request containing tokens to bridge.
     ///
-    /// TODO: isn't better to receive a raw Span<felt252>
-    /// to be more flexible? And the first felt25 being the header
-    /// defines how the deserialization takes place?
     #[l1_handler]
     fn withdraw_auto_from_l1(ref self: ContractState, from_address: felt252, req: Request) {
         // ensure only the l1 bridge contract can cause this function to be called
-        assert(self.l1_bridge_address.read().into() == from_address, 'Invalid L1 msg sender');
+        assert(self.l1_bridge_address.read().into() == from_address, 'Caller not L1 Bridge');
 
         let mut token_ids = req.ids;
         loop {
@@ -127,7 +124,7 @@ mod bridge {
         }
 
 
-        /// Deposits tokens to be bridged on the L1.
+        /// Initiates a deposit request to be executed on L1.
         ///
         /// # Arguments
         ///
