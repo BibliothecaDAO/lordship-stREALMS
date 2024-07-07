@@ -70,7 +70,9 @@ mod bridge {
     #[l1_handler]
     fn withdraw_auto_from_l1(ref self: ContractState, from_address: felt252, req: Request) {
         // ensure only the l1 bridge contract can cause this function to be called
-        assert(self.l1_bridge_address.read().into() == from_address, 'Caller not L1 Bridge');
+        assert(
+            self.l1_bridge_address.read().into() == from_address, 'Bridge: Caller not L1 Bridge'
+        );
 
         let mut token_ids = req.ids;
         loop {
@@ -98,7 +100,7 @@ mod bridge {
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             self.ownable.assert_only_owner();
-            self.upgradeable._upgrade(new_class_hash);
+            self.upgradeable.upgrade(new_class_hash);
         }
     }
 
@@ -146,11 +148,14 @@ mod bridge {
         ///         this is achieved by using transfer_from(caller, this, *token_id)
         ///         instead of transfer_from(owner, this, *token_id)
         /// 
+        /// Note: we expect the nft to be set up in such a way that only this 
+        ///       bridge contract is allowed to burn the token
+        /// 
         fn deposit_tokens(
             ref self: ContractState, salt: felt252, owner_l1: EthAddress, token_ids: Span<u256>,
         ) {
-            assert!(token_ids.len() > 0, "no token id");
-            assert!(owner_l1.is_non_zero(), "owner l1 address is zero");
+            assert!(token_ids.len() > 0, "Bridge: no token id");
+            assert!(owner_l1.is_non_zero(), "Bridge: owner l1 address is zero");
 
             let this = starknet::get_contract_address();
             let caller = starknet::get_caller_address();
@@ -167,6 +172,10 @@ mod bridge {
                         erc721_dispatcher.transfer_from(caller, this, *token_id);
 
                         // burn token
+
+                        // @note we expect the nft token to have permissions
+                        //       set up in such a way that only the bridge 
+                        //       is allowed to burn
                         erc721_burn_dispatcher.burn(*token_id);
                     },
                     Option::None => { break; }
@@ -176,7 +185,7 @@ mod bridge {
             let req = Request {
                 hash: compute_request_hash(salt, l2_token, owner_l1, token_ids),
                 owner_l1,
-                owner_l2: Zeroable::zero(),
+                owner_l2: caller,
                 ids: token_ids,
             };
 
@@ -190,7 +199,7 @@ mod bridge {
                 .emit(
                     DepositRequestInitiated {
                         hash: req.hash,
-                        block_timestamp: starknet::info::get_block_timestamp(),
+                        block_timestamp: starknet::get_block_timestamp(),
                         req_content: req
                     }
                 );
