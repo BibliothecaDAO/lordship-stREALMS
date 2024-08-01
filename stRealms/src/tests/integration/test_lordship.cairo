@@ -167,8 +167,8 @@ fn test_constructor() {
 
     // ensure erc721 was initialized properly
     let erc721_dispatcher = ERC721ABIDispatcher { contract_address: lordship_address };
-    assert_eq!(erc721_dispatcher.name(), "Staked Realm");
-    assert_eq!(erc721_dispatcher.symbol(), "stREALM");
+    assert_eq!(erc721_dispatcher.name(), "Realms (for Adventurers)");
+    assert_eq!(erc721_dispatcher.symbol(), "LootRealm");
 
     // ensure strealm component was initialized properly
     let strealm_dispatcher = IStRealmDispatcher { contract_address: lordship_address };
