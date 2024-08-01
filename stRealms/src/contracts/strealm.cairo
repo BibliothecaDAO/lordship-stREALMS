@@ -333,7 +333,7 @@ mod StRealm {
         reward_payer: ContractAddress,
         metadata_addr: ContractAddress
     ) {
-        self.erc721.initializer("Staked Realm", "stREALM", "");
+        self.erc721.initializer("Realms (for Adventurers)", "LootRealm", "");
         self.strealm.initializer(:flow_rate, :reward_token, :reward_payer);
 
         self.access_control.initializer();
