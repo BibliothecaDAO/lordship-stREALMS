@@ -11,6 +11,7 @@ import "../test/token/ERC721MintFree.sol";
 
 import "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 
 contract Deploy is Script {
@@ -55,7 +56,8 @@ contract Deploy is Script {
     }
 }
 
-contract Deposit is Script {
+
+contract TransferOwnership is Script {
     function setUp() public {}
 
     function run() public {
@@ -84,6 +86,22 @@ contract Deposit is Script {
             ids // token ids 
         );
 
+        vm.stopBroadcast();
+    }
+}
+
+contract SetOwnership is Script {
+    function setUp() public {}
+
+    function run() public {
+        Config memory config = Utils.loadConfig();
+        vm.startBroadcast(config.deployerPrivateKey);
+        address impl = address(0x9c30e0be313bc7Ef4F8CCE38C12734b502EcdeD3);
+        address proxy = address(0xA425Fa1678f7A5DaFe775bEa3F225c4129cdbD25);
+        Ownable(impl)
+            .transferOwnership(address(0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe));
+        Ownable(proxy)
+            .transferOwnership(address(0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe));
         vm.stopBroadcast();
     }
 }

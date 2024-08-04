@@ -5,6 +5,7 @@ libs = ["lib"]
 gas_limit = 999999999
 fs_permissions = [{ access = "read-write", path = "./"}]
 evm_version="shanghai"
+solc = "0.8.24"
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
 [rpc_endpoints]
@@ -15,3 +16,4 @@ anvil = "http://127.0.0.1:8545"
 [etherscan]
 goerli = { key = "${ETHERSCAN_API_KEY}" }
 anvil = { key = "${ETHERSCAN_API_KEY", chainId=31337}
+

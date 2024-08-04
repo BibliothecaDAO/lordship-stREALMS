@@ -14,6 +14,9 @@ sgr0 := $(shell tput sgr0)
 # Bridge deploy impl + proxy.
 bridge_l1_deploy:
 	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Bridge.s.sol:Deploy -vvvvvvvv
+	
+bridge_set_ownership:
+	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Bridge.s.sol:SetOwnership -vvvvvvvv
 
 bridge_deposit:
 	forge script --broadcast  --rpc-url ${ETH_RPC_URL} script/Bridge.s.sol:Deposit
