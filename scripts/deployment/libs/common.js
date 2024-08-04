@@ -145,9 +145,10 @@ export const writeDeploymentToFile = async (
 const readFileAsync = promisify(fs.readFile);
 
 export const getL2DeploymentAddress = async (contractName) => {
+  const folderPath = process.env.DEPLOYMENT_ADDRESSES_FOLDER;
+  const fileName = path.join(folderPath, `${contractName}.json`);
+
   try {
-    const folderPath = process.env.DEPLOYMENT_ADDRESSES_FOLDER;
-    const fileName = path.join(folderPath, `${contractName}.json`);
 
     const data = await readFileAsync(fileName, "utf8");
     const jsonData = JSON.parse(data);

@@ -1,1 +1,1 @@
-To deploy, run `./scripts/deployment/deploy.sh`
+To deploy, run `./scripts/deployment/deploy.sh >> mainnet_deployment.ansi`

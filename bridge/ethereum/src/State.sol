@@ -68,4 +68,15 @@ contract BridgeState is Ownable {
     }
 
 
+    function l1TokenAddress() public view virtual returns (address) {
+        return _l1TokenAddress;
+    }
+
+    function l2BridgeAddress() public view virtual returns (snaddress) {
+        return _l2BridgeAddress;
+    }
+
+    function l2BridgeSelector() public view virtual returns (felt252) {
+        return _l2BridgeSelector;
+    }
 }
