@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: software-mansion/setup-scarb@v1
         with:
-          tool-versions: stRealms/.tool-versions
-      - run: cd stRealms && scarb fmt --check
+          tool-versions: stRealms/realms/.tool-versions
+      - run: cd stRealms/realms && scarb fmt --check
 
   check-build:
     runs-on: ubuntu-latest
@@ -22,8 +22,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: software-mansion/setup-scarb@v1
         with:
-          tool-versions: stRealms/.tool-versions
-      - run: cd stRealms && scarb build
+          tool-versions: stRealms/realms/.tool-versions
+      - run: cd stRealms/realms && scarb build
 
   check-test:
     runs-on: ubuntu-latest
@@ -31,8 +31,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: software-mansion/setup-scarb@v1
         with:
-          tool-versions: stRealms/.tool-versions
+          tool-versions: stRealms/realms/.tool-versions
       - uses: foundry-rs/setup-snfoundry@v3
         with:
-          tool-versions: stRealms/.tool-versions
-      - run: cd stRealms && snforge test
+          tool-versions: stRealms/realms/.tool-versions
+      - run: cd stRealms/realms && snforge test
