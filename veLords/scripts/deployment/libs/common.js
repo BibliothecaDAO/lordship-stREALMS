@@ -26,6 +26,7 @@ export const getContractPath = (TARGET_PATH, contract_name) => {
   if (!c) {
     throw new Error(`Contract not found: ${contract_name}`);
   }
+  console.log(`\n\n\nContract is ${c}...\n\n`.blue);
   return path.join(TARGET_PATH, c);
 };
 
@@ -138,7 +139,7 @@ export const writeDeploymentToFile = async (
 
 const readFileAsync = promisify(fs.readFile);
 
-export const getL2DeploymentAddress = async (contractName) => {
+export const getDeployedAddress = async (contractName) => {
   const folderPath = process.env.DEPLOYMENT_ADDRESSES_FOLDER;
   const fileName = path.join(folderPath, `${contractName}.json`);
 

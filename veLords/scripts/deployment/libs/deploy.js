@@ -2,6 +2,7 @@ import "dotenv/config";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { declare, getContractPath, deploy } from "./common.js";
+import { getAccount, getNetwork } from "./network.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,9 +23,9 @@ export const deployVeLords = async () => {
   ).class_hash;
 
   // deploy contract
-  let VELORDS_LORDS_TOKEN = BigInt(process.env.VELORDS_LORDS_TOKEN);
+  let LORDS_TOKEN = BigInt(process.env.LORDS_TOKEN);
   let VELORDS_ADMIN = BigInt(process.env.VELORDS_ADMIN);
-  let constructorCalldata = [VELORDS_LORDS_TOKEN, VELORDS_ADMIN];
+  let constructorCalldata = [LORDS_TOKEN, VELORDS_ADMIN];
   let address = await deploy(realName, class_hash, constructorCalldata);
   return address;
 };
@@ -50,7 +51,7 @@ export const deployDLords = async () => {
 };
 
 
-export const deployRewardPool = async (veLordsAddress, dLordsAddress) => {
+export const deployRewardPool = async (veLordsAddress) => {
   ///////////////////////////////////////////
   ////////       Reward Pool    /////////////
   ///////////////////////////////////////////
@@ -65,14 +66,42 @@ export const deployRewardPool = async (veLordsAddress, dLordsAddress) => {
   // deploy contract
   let RP_ADMIN = BigInt(process.env.REWARD_POOL_ADMIN);
   let RP_VELORDS_ADDRESS = veLordsAddress;
-  let RP_DLORDS_ADDRESS = dLordsAddress;
+  let RP_REWARD_TOKEN_ADDRESS = BigInt(process.env.LORDS_TOKEN);
   let RP_TIMESTAMP_NOW = Math.round(Date.now() / 1000);
   let constructorCalldata = [
     RP_ADMIN,
     RP_VELORDS_ADDRESS,
-    RP_DLORDS_ADDRESS, 
+    RP_REWARD_TOKEN_ADDRESS, 
     RP_TIMESTAMP_NOW
   ];
-  await deploy(realName, class_hash, constructorCalldata);
+  let address = await deploy(realName, class_hash, constructorCalldata);
+  return address
 };
 
+
+export const setRewardPoolInVeLords = async (veLords, rewardPool) => {
+  ///////////////////////////////////////////
+  /////  Set Reward Pool in veLords      ////
+  ///////////////////////////////////////////
+
+  const account = getAccount();
+  console.log(`\n Setting Reward Pool ... \n\n`.green);
+
+  const contract = await account.execute([
+    {
+      contractAddress: veLords,
+      entrypoint: "set_reward_pool",
+      calldata: [rewardPool],
+    }
+  ]);
+
+  // Wait for transaction
+  let network = getNetwork(process.env.STARKNET_NETWORK);
+  console.log(
+    "Tx hash: ".green,
+    `${network.explorer_url}/tx/${contract.transaction_hash})`
+  );
+  await account.waitForTransaction(contract.transaction_hash);
+
+  console.log("Successfully set reward pool in veLords".green, "\n\n");
+};
