@@ -555,7 +555,8 @@ mod velords {
                 last_point.slope = max(0, last_point.slope); // this shouldn't happen
                 last_checkpoint = t_i;
                 last_point.ts = t_i;
-                last_point.block = initial_last_point.block + block_slope * (t_i - initial_last_point.ts) / SCALE_U64;
+                last_point.block = initial_last_point.block
+                    + ((block_slope * (t_i - initial_last_point.ts)) / SCALE_U64);
                 epoch += 1;
 
                 if t_i < now {
