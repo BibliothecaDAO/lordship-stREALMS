@@ -403,8 +403,6 @@ fn test_modify_lock_time_by_non_owner_noop() {
 
 #[test]
 fn test_locked_balance_progression() {
-    // TODO: this test fails, fix it
-
     let (velords, lords) = common::velords_setup();
     let velords_token = IERC20Dispatcher { contract_address: velords.contract_address };
     let blobert: ContractAddress = common::blobert();
@@ -474,4 +472,97 @@ fn test_locked_balance_progression() {
 // test other public fns
 // test withdrawal - interacts with reward pool
 
+#[test]
+fn test_withdrawal_after_lock_expiry_pass() {
+    let (velords, lords) = common::velords_setup();
+    let velords_token = IERC20Dispatcher { contract_address: velords.contract_address };
+    let blobert: ContractAddress = common::blobert();
+    common::setup_for_blobert(lords.contract_address, velords.contract_address);
 
+    let balance: u256 = 10_000_000 * common::ONE;
+    let lock_amount: u256 = 2_000_000 * common::ONE;
+    let now = get_block_timestamp();
+    let unlock_time: u64 = now + common::YEAR;
+
+    // blobert locks 2M LORDS for 1 year
+    start_prank(CheatTarget::One(velords.contract_address), blobert);
+    velords.manage_lock(lock_amount, unlock_time, blobert);
+    assert_eq!(lords.balance_of(blobert), balance - lock_amount);
+
+    // move time to after lock expiry
+    let lock_expire_ts: u64 = unlock_time + 10;
+    start_warp(CheatTarget::All, lock_expire_ts);
+
+    // blobert withdraws
+    let (amount, penalty) = velords.withdraw();
+
+    assert_eq!(amount.into(), lock_amount);
+    assert_eq!(penalty, 0);
+    assert_eq!(lords.balance_of(blobert), balance);
+    assert_eq!(velords_token.total_supply(), 0);
+}
+
+#[test]
+fn test_withdrawal_during_lock_with_penalty_pass() {
+    let (velords, lords) = common::velords_setup();
+    let blobert: ContractAddress = common::blobert();
+    common::setup_for_blobert(lords.contract_address, velords.contract_address);
+
+    let balance: u256 = 10_000_000 * common::ONE;
+    let lock_amount: u256 = 2_000_000 * common::ONE;
+    let now = get_block_timestamp();
+    let unlock_time: u64 = now + 4 * common::YEAR;
+
+    // blobert locks 2M LORDS for 4 years
+    start_prank(CheatTarget::One(velords.contract_address), blobert);
+    velords.manage_lock(lock_amount, unlock_time, blobert);
+    assert_eq!(lords.balance_of(blobert), balance - lock_amount);
+
+    // move time 2 years forward
+    start_warp(CheatTarget::All, now + common::YEAR * 2);
+
+    // blobert withdraws, approximately 1/2 through the lock period,
+    // penalty is about 50%
+    let (amount, penalty) = velords.withdraw();
+
+    let expected_amount: u256 = lock_amount / 2;
+    let expected_penalty: u256 = lock_amount / 2;
+    let tolerance: u256 = lock_amount / 200; // half a percent
+    common::assert_approx(amount.into(), expected_amount, tolerance, "penalized amount mismatch");
+    common::assert_approx(penalty.into(), expected_penalty, tolerance, "penalty mismatch");
+    assert_eq!((amount + penalty).into(), lock_amount);
+    // blobert gets his LORDS back, minus penalty
+    assert_eq!(lords.balance_of(blobert), balance - lock_amount + amount.into());
+}
+
+#[test]
+fn test_withdrawal_during_lock_using_max_penalty_pass() {
+    let (velords, lords) = common::velords_setup();
+    let blobert: ContractAddress = common::blobert();
+    common::setup_for_blobert(lords.contract_address, velords.contract_address);
+
+    let balance: u256 = 10_000_000 * common::ONE;
+    let lock_amount: u256 = 2_000_000 * common::ONE;
+    let now = get_block_timestamp();
+    let unlock_time: u64 = now + 4 * common::YEAR;
+
+    // blobert locks 2M LORDS for 4 years
+    start_prank(CheatTarget::One(velords.contract_address), blobert);
+    velords.manage_lock(lock_amount, unlock_time, blobert);
+    assert_eq!(lords.balance_of(blobert), balance - lock_amount);
+
+    // move time just slightly
+    start_warp(CheatTarget::All, now + 1000);
+
+    // blobert withdraws, is penalized by MAX_PENALTY (75%)
+    let (amount, penalty) = velords.withdraw();
+
+    let expected_amount: u256 = 500_000 * common::ONE;
+    let expected_penalty: u256 = 1_500_000 * common::ONE;
+
+    assert_eq!(amount.into(), expected_amount);
+    assert_eq!(penalty.into(), expected_penalty);
+    assert_eq!((amount + penalty).into(), lock_amount);
+    // blobert gets his LORDS back, minus penalty
+    assert_eq!(lords.balance_of(blobert), balance - lock_amount + amount.into());
+}
