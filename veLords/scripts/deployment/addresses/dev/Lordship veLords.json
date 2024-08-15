@@ -1,9 +1,15 @@
 {
-  "address": "0x29dc004a77c981b425628d36997e4534a100c2c324a0caa00e8e198ca23ce8",
+  "address": "0x7d013668647fb8edd309be76e709392a077136fdf55f8a8d6877bd81cf8d20f",
   "calldata": [
-    "0x4ef0e2993abf44178d3a40f2818828ed1c09cde9009677b7a3323570b4c0f2e",
+    "0x19c92fa87f4d5e3be25c3dd6a284f30282a07e87cd782f5fd387b82c8142017",
     "0x272fb197b288ab6a441b80a60f60eef66ff7d5e9d8adc4f1d45fb3d9a0c4205"
   ],
-  "deployed_at": 1723217945242,
-  "deployed_at_readable": "Fri, 09 Aug 2024 15:39:05 GMT"
+  "deployed_at": 1723761159144,
+  "deployed_at_readable": "Thu, 15 Aug 2024 22:32:39 GMT"
+}
+
+{
+  "veLords": "0x7d013668647fb8edd309be76e709392a077136fdf55f8a8d6877bd81cf8d20f",
+  "rewardPool": "0x5b072f1bcaa9a50ed1705c9d5c77448c66f62860f4c050083c28f0eb8701bd7",
+  "lordsTestAddress": "0x019c92fa87f4d5e3be25c3dd6a284f30282a07e87cd782f5fd387b82c8142017"
 }
