@@ -53,7 +53,8 @@ mod velords {
     };
     use super::{Lock, Point};
 
-    const SCALE: u64 = 1000000000000000000; // 10 ** 18
+    const SCALE: u128 = 1000000000000000000; // 10 ** 18
+    const SCALE_U64: u64 = 1000000000000000000; // optimization
     const WEEK: u64 = 3600 * 24 * 7;
     const MAX_LOCK_DURATION: u64 = 4 * 365 * 86400; // 4 years
     const MAX_N_WEEKS: u64 = 210;
@@ -388,9 +389,10 @@ mod velords {
 
             let now: u64 = get_block_timestamp();
             let penalty: u128 = if locked.end_time > now {
-                let time_left: u64 = locked.end_time - now;
-                let penalty_ratio: u128 = min((time_left * SCALE / MAX_LOCK_DURATION).into(), MAX_PENALTY_RATIO);
-                locked.amount * penalty_ratio / SCALE.into()
+                let time_left: u128 = (locked.end_time - now).into();
+                let penalty_ratio: u128 = min((time_left * SCALE / MAX_LOCK_DURATION.into()), MAX_PENALTY_RATIO);
+                let amount: u256 = locked.amount.into(); // scaling up to u256 to prevent mul_overflow
+                (amount * penalty_ratio.into() / SCALE.into()).try_into().expect('penalty overflow')
             } else {
                 0
             };
@@ -541,7 +543,8 @@ mod velords {
             let initial_last_point: Point = last_point;
             let mut block_slope: u64 = 0; // dblock/dt
             if now > last_checkpoint {
-                block_slope = SCALE * (block - last_point.block) / (now - last_checkpoint);
+                let slope: u128 = (SCALE * (block - last_point.block).into()) / (now - last_checkpoint).into();
+                block_slope = slope.try_into().expect('block slope overflow');
             }
 
             // apply weekly slope changes and record weekly global snapshots
@@ -554,7 +557,8 @@ mod velords {
                 last_point.slope = max(0, last_point.slope); // this shouldn't happen
                 last_checkpoint = t_i;
                 last_point.ts = t_i;
-                last_point.block = initial_last_point.block + block_slope * (t_i - initial_last_point.ts) / SCALE;
+                last_point.block = initial_last_point.block
+                    + ((block_slope * (t_i - initial_last_point.ts)) / SCALE_U64);
                 epoch += 1;
 
                 if t_i < now {
