@@ -19,7 +19,7 @@ mod reward_pool {
     const DAY: u64 = 3600 * 24;
     const WEEK: u64 = DAY * 7;
     const TOKEN_CHECKPOINT_DEADLINE: u64 = DAY;
-    const ITERATION_LIMIT: u32 = 200;
+    const ITERATION_LIMIT: u32 = 10_000;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
