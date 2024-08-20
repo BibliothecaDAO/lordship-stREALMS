@@ -55,3 +55,46 @@ fn test_reward_pool_claim_pass() {
     let reward_pool_balance = lords.balance_of(reward_pool.contract_address);
     common::assert_approx(reward_pool_balance, 0, common::ONE * 10, "reward pool balance mismatch");
 }
+
+#[test]
+fn test_flow_issue() {
+    // test of a flow that Redbeard reported as ending in a TX error
+    let (velords, lords) = common::velords_setup();
+    let reward_pool = IRewardPoolDispatcher { contract_address: velords.get_reward_pool() };
+    let blobert: ContractAddress = common::blobert();
+    common::setup_for_blobert(lords.contract_address, velords.contract_address);
+
+    let lock_amount: u256 = 2_000_000 * common::ONE;
+    let now = get_block_timestamp();
+
+    // blobert locks 2M LORDS for 1 year
+    start_prank(CheatTarget::One(velords.contract_address), blobert);
+    velords.manage_lock(lock_amount, now + common::YEAR, blobert);
+
+    // time passes, blobert paperhand withdraws early
+    let now = now + 14 * common::DAY;
+    start_warp(CheatTarget::All, now);
+    velords.withdraw();
+
+    // time passes, blobert locks some more again
+    let now = now + 20 * common::DAY;
+    start_warp(CheatTarget::All, now);
+    velords.manage_lock(500 * common::ONE, now + 30 * common::DAY, blobert);
+
+    // time passes, blobert decides to extend the lock
+    let now = now + 5 * common::DAY;
+    start_warp(CheatTarget::All, now);
+    velords.manage_lock(0, now + 2 * common::YEAR, blobert);
+
+    // blobert calls burn, because why not
+    start_prank(CheatTarget::One(lords.contract_address), blobert);
+    lords.approve(reward_pool.contract_address, 500_000 * common::ONE);
+    stop_prank(CheatTarget::One(lords.contract_address));
+    start_prank(CheatTarget::One(reward_pool.contract_address), blobert);
+    reward_pool.burn(500_000 * common::ONE);
+
+    // time passes, blobert claims rewards
+    let now = now + 7 * common::DAY;
+    start_warp(CheatTarget::All, now);
+    let _reward = reward_pool.claim(blobert);
+}
