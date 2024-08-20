@@ -555,7 +555,8 @@ mod velords {
                 last_checkpoint = t_i;
                 last_point.ts = t_i;
                 // calculating block in u128 to prevent overflow
-                let blk: u128 = initial_last_point.block.into() + ((Into::<u64, u128>::into(block_slope) * (t_i - initial_last_point.ts).into()) / SCALE);
+                let blk: u128 = initial_last_point.block.into()
+                    + ((Into::<u64, u128>::into(block_slope) * (t_i - initial_last_point.ts).into()) / SCALE);
                 last_point.block = blk.try_into().expect('block overflow');
                 epoch += 1;
 
