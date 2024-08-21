@@ -19,7 +19,7 @@ mod reward_pool {
     const DAY: u64 = 3600 * 24;
     const WEEK: u64 = DAY * 7;
     const TOKEN_CHECKPOINT_DEADLINE: u64 = DAY;
-    const ITERATION_LIMIT: u32 = 200;
+    const ITERATION_LIMIT: u32 = 500;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -263,6 +263,7 @@ mod reward_pool {
 
                 t = next_week;
                 this_week = next_week;
+                i += 1;
             };
 
             self.emit(CheckpointToken { time: now, tokens: to_distribute })
@@ -294,6 +295,7 @@ mod reward_pool {
                 self.ve_supply.write(t, ve_supply.into());
 
                 t += WEEK;
+                i += 1;
             };
 
             self.time_cursor.write(t);
@@ -334,6 +336,7 @@ mod reward_pool {
                 }
                 to_distribute += balance_of * self.tokens_per_week.read(week_cursor) / self.ve_supply.read(week_cursor);
                 week_cursor += WEEK;
+                i += 1;
             };
 
             self.time_cursor_of.write(recipient, week_cursor);

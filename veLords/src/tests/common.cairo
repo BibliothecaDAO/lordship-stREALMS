@@ -116,6 +116,17 @@ pub fn setup_for_blobert(lords: ContractAddress, velords: ContractAddress) {
     stop_prank(CheatTarget::One(lords));
 }
 
+pub fn setup_for_loaf(lords: ContractAddress, velords: ContractAddress) {
+    // give loaf 10M LORDS
+    let amount: u256 = ONE * 10_000_000; // 10M LORDS
+    fund_lords(loaf(), Option::Some(amount));
+
+    // loaf allows veLords contract to use its LORDS
+    start_prank(CheatTarget::One(lords), loaf());
+    IERC20Dispatcher { contract_address: lords }.approve(velords, amount);
+    stop_prank(CheatTarget::One(lords));
+}
+
 pub fn floor_to_week(ts: u64) -> u64 {
     (ts / WEEK) * WEEK
 }

@@ -16,5 +16,6 @@ pub mod mocks {
 #[cfg(test)]
 mod tests {
     pub mod common;
+    mod test_reward_pool;
     mod test_velords;
 }
