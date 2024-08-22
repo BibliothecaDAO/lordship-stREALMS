@@ -469,8 +469,8 @@ fn test_locked_balance_progression() {
 
     assert_eq!(velords_token.balance_of(blobert), 0, "blobert's veLORDS balance mismatch after expiry");
 }
-// test other public fns
-// test withdrawal - interacts with reward pool
+
+// TODO: test other public fns
 
 #[test]
 fn test_withdrawal_after_lock_expiry_pass() {

@@ -54,7 +54,6 @@ mod velords {
     use super::{Lock, Point};
 
     const SCALE: u128 = 1000000000000000000; // 10 ** 18
-    const SCALE_U64: u64 = 1000000000000000000; // optimization
     const WEEK: u64 = 3600 * 24 * 7;
     const MAX_LOCK_DURATION: u64 = 4 * 365 * 86400; // 4 years
     const MAX_N_WEEKS: u64 = 210;
@@ -557,8 +556,10 @@ mod velords {
                 last_point.slope = max(0, last_point.slope); // this shouldn't happen
                 last_checkpoint = t_i;
                 last_point.ts = t_i;
-                last_point.block = initial_last_point.block
-                    + ((block_slope * (t_i - initial_last_point.ts)) / SCALE_U64);
+                // calculating block in u128 to prevent overflow
+                let blk: u128 = initial_last_point.block.into()
+                    + ((Into::<u64, u128>::into(block_slope) * (t_i - initial_last_point.ts).into()) / SCALE);
+                last_point.block = blk.try_into().expect('block overflow');
                 epoch += 1;
 
                 if t_i < now {
