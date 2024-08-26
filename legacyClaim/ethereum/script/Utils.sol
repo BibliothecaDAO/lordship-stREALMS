@@ -8,13 +8,9 @@ address constant HEVM_ADDRESS = address(bytes20(uint160(uint256(keccak256("hevm 
 struct Config {
     address ownerAddress;
     address l1BridgeActualOwnerAddress;
-    address l1TokenAddress;
     address deployerAddress;
     uint256 deployerPrivateKey;
-
     address starknetCoreAddress;
-    address bridgeL1ProxyAddress;
-
     uint256 l2BridgeSelector;
 }
 
@@ -30,14 +26,11 @@ library Utils {
         return Config({
             l1BridgeActualOwnerAddress: vm.envAddress("BRIDGE_L1_ACTUAL_OWNER_ADDRESS"),
             ownerAddress: vm.envAddress("BRIDGE_L1_OWNER_ADDRESS"),
-            l1TokenAddress: vm.envAddress("BRIDGE_L1_TOKEN_ADDRESS"),
             
             deployerAddress: vm.envAddress("DEPLOYMENT_ACCOUNT_ADDRESS"),
             deployerPrivateKey: vm.envUint("DEPLOYMENT_ACCOUNT_PRIVATE_KEY"),
 
-            starknetCoreAddress: vm.envAddress("STARKNET_CORE_L1_ADDRESS"),
-            bridgeL1ProxyAddress: vm.envAddress("BRIDGE_L1_PROXY_ADDRESS"),
-            
+            starknetCoreAddress: vm.envAddress("STARKNET_CORE_L1_ADDRESS"),            
             l2BridgeSelector: vm.envUint("BRIDGE_L2_SELECTOR")
             });
     }

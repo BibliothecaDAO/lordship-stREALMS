@@ -1,9 +1,8 @@
 {
-  "address": "0x47bfd5fbe7d2326c3d2b2a30637a0a0e3f3078563a0a8343cc78b1f3ed82bf5",
-  "calldata": [
-    "0x272fb197b288ab6a441b80a60f60eef66ff7d5e9d8adc4f1d45fb3d9a0c4205",
-    "0x19c92fa87f4d5e3be25c3dd6a284f30282a07e87cd782f5fd387b82c8142017"
-  ],
-  "deployed_at": 1724671829554,
-  "deployed_at_readable": "Mon, 26 Aug 2024 11:30:29 GMT"
+  "data": {
+    "impl_address": "0xAdaE74B87fb7Dbf8714A82491cE1c75D3c18d7Cd",
+    "proxy_address": "0x36424f07Da8364aBB56d0eD717F93749b1C081f0",
+    "sncore_address": "0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057",
+    "success": true
+  }
 }
