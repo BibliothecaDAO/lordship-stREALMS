@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { json } from "starknet";
 import { getNetwork, getAccount } from "./network.js";
-import colors from "colors";
+import colors from "colors/index.js";
 import { promisify } from "util";
 
 
