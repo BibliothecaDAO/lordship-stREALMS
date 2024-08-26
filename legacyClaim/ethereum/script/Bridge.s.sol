@@ -7,7 +7,6 @@ import "./Utils.sol";
 import "../src/Bridge.sol";
 import "../src/sn/Cairo.sol";
 import "../src/sn/StarknetMessagingLocal.sol";
-import "../test/token/ERC721MintFree.sol";
 
 import "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";

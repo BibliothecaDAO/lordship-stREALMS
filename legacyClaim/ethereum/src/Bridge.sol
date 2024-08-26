@@ -41,9 +41,9 @@ contract Bridge is IBridgeEvent, UUPSOwnableProxied, BridgeState {
     }
 
     /**
-       @notice Send request to l2 to receive reward on starknet
+       @notice Claim staking reward on starknet
 
-       @param ownerL2 address that'll receive reward on l2
+       @param ownerL2 the address the reward will be sent to on starknet
        @param claimId the claim id
     */
     function claimOnStarknet(snaddress ownerL2, uint16 claimId)
