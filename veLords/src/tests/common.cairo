@@ -24,6 +24,10 @@ pub fn velords_owner() -> ContractAddress {
     contract_address_const::<'velords owner'>()
 }
 
+pub fn reward_pool_owner() -> ContractAddress {
+    contract_address_const::<'reward pool owner'>()
+}
+
 pub fn blobert() -> ContractAddress {
     contract_address_const::<'blobert'>()
 }
@@ -69,9 +73,11 @@ pub fn deploy_velords() -> ContractAddress {
     cls.deploy(@calldata).expect('velords deploy failed')
 }
 
-pub fn deploy_reward_pool(velords: ContractAddress, dlords: ContractAddress) -> ContractAddress {
-    let cls = declare("dlords_reward_pool");
-    let calldata: Array<felt252> = array![velords.into(), dlords.into(), get_block_timestamp().into()];
+pub fn deploy_reward_pool(velords: ContractAddress, reward_token: ContractAddress) -> ContractAddress {
+    let cls = declare("reward_pool");
+    let calldata: Array<felt252> = array![
+        reward_pool_owner().into(), velords.into(), reward_token.into(), get_block_timestamp().into()
+    ];
     cls.deploy(@calldata).expect('reward pool deploy failed')
 }
 
@@ -80,8 +86,7 @@ pub fn velords_setup() -> (IVEDispatcher, IERC20Dispatcher) {
 
     let lords: ContractAddress = deploy_lords();
     let velords: ContractAddress = deploy_velords();
-    let dlords: ContractAddress = deploy_dlords();
-    let reward_pool: ContractAddress = deploy_reward_pool(velords, dlords);
+    let reward_pool: ContractAddress = deploy_reward_pool(velords, lords);
 
     start_prank(CheatTarget::One(velords), velords_owner());
     IVEDispatcher { contract_address: velords }.set_reward_pool(reward_pool);
@@ -107,6 +112,17 @@ pub fn setup_for_blobert(lords: ContractAddress, velords: ContractAddress) {
 
     // blobert allows veLords contract to use its LORDS
     start_prank(CheatTarget::One(lords), blobert());
+    IERC20Dispatcher { contract_address: lords }.approve(velords, amount);
+    stop_prank(CheatTarget::One(lords));
+}
+
+pub fn setup_for_loaf(lords: ContractAddress, velords: ContractAddress) {
+    // give loaf 10M LORDS
+    let amount: u256 = ONE * 10_000_000; // 10M LORDS
+    fund_lords(loaf(), Option::Some(amount));
+
+    // loaf allows veLords contract to use its LORDS
+    start_prank(CheatTarget::One(lords), loaf());
     IERC20Dispatcher { contract_address: lords }.approve(velords, amount);
     stop_prank(CheatTarget::One(lords));
 }

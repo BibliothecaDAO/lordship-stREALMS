@@ -53,8 +53,7 @@ mod velords {
     };
     use super::{Lock, Point};
 
-    const LORDS_TOKEN: felt252 = 0x124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49;
-    const SCALE: u64 = 1000000000000000000; // 10 ** 18
+    const SCALE: u128 = 1000000000000000000; // 10 ** 18
     const WEEK: u64 = 3600 * 24 * 7;
     const MAX_LOCK_DURATION: u64 = 4 * 365 * 86400; // 4 years
     const MAX_N_WEEKS: u64 = 210;
@@ -76,6 +75,8 @@ mod velords {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
+        // lords token
+        lords_token: IERC20Dispatcher,
         // pool for early exit penalties
         reward_pool: IRewardPoolDispatcher,
         // stores total amount of LORDS locked
@@ -137,7 +138,8 @@ mod velords {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
+    fn constructor(ref self: ContractState, lords_token: IERC20Dispatcher, owner: ContractAddress) {
+        self.lords_token.write(lords_token);
         self.ownable.initializer(owner);
 
         let point = Point { bias: 0, slope: 0, ts: get_block_timestamp(), block: get_block_number() };
@@ -363,7 +365,7 @@ mod velords {
             self.checkpoint_internal(owner, @old_lock, @new_lock);
 
             if amount.is_non_zero() {
-                LORDS().transfer_from(caller, get_contract_address(), amount.into());
+                self.lords_token.read().transfer_from(caller, get_contract_address(), amount.into());
             }
 
             self.emit(Supply { old_amount: old_supply, new_amount: old_supply + amount });
@@ -386,9 +388,10 @@ mod velords {
 
             let now: u64 = get_block_timestamp();
             let penalty: u128 = if locked.end_time > now {
-                let time_left: u64 = locked.end_time - now;
-                let penalty_ratio: u128 = min((time_left * SCALE / MAX_LOCK_DURATION).into(), MAX_PENALTY_RATIO);
-                locked.amount * penalty_ratio / SCALE.into()
+                let time_left: u128 = (locked.end_time - now).into();
+                let penalty_ratio: u128 = min((time_left * SCALE / MAX_LOCK_DURATION.into()), MAX_PENALTY_RATIO);
+                let amount: u256 = locked.amount.into(); // scaling up to u256 to prevent mul_overflow
+                (amount * penalty_ratio.into() / SCALE.into()).try_into().expect('penalty overflow')
             } else {
                 0
             };
@@ -400,11 +403,11 @@ mod velords {
             self.checkpoint_internal(caller, @locked, @Default::default());
 
             // transfer
-            LORDS().transfer(caller, (locked.amount - penalty).into());
+            self.lords_token.read().transfer(caller, (locked.amount - penalty).into());
 
             if penalty.is_non_zero() {
                 let reward_pool = self.reward_pool.read();
-                LORDS().approve(reward_pool.contract_address, penalty.into());
+                self.lords_token.read().approve(reward_pool.contract_address, penalty.into());
                 reward_pool.burn(penalty.into());
                 self.emit(Penalty { caller, amount: penalty })
             }
@@ -539,7 +542,8 @@ mod velords {
             let initial_last_point: Point = last_point;
             let mut block_slope: u64 = 0; // dblock/dt
             if now > last_checkpoint {
-                block_slope = SCALE * (block - last_point.block) / (now - last_checkpoint);
+                let slope: u128 = (SCALE * (block - last_point.block).into()) / (now - last_checkpoint).into();
+                block_slope = slope.try_into().expect('block slope overflow');
             }
 
             // apply weekly slope changes and record weekly global snapshots
@@ -552,7 +556,10 @@ mod velords {
                 last_point.slope = max(0, last_point.slope); // this shouldn't happen
                 last_checkpoint = t_i;
                 last_point.ts = t_i;
-                last_point.block = initial_last_point.block + block_slope * (t_i - initial_last_point.ts) / SCALE;
+                // calculating block in u128 to prevent overflow
+                let blk: u128 = initial_last_point.block.into()
+                    + ((Into::<u64, u128>::into(block_slope) * (t_i - initial_last_point.ts).into()) / SCALE);
+                last_point.block = blk.try_into().expect('block overflow');
                 epoch += 1;
 
                 if t_i < now {
@@ -614,9 +621,5 @@ mod velords {
 
     fn floor_to_week(ts: u64) -> u64 {
         (ts / WEEK) * WEEK
-    }
-
-    fn LORDS() -> IERC20Dispatcher {
-        IERC20Dispatcher { contract_address: contract_address_const::<LORDS_TOKEN>() }
     }
 }
