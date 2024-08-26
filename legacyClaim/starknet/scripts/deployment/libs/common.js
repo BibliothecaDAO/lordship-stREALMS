@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { json } from "starknet";
 import { getNetwork, getAccount } from "./network.js";
-import colors from "colors/index.js";
+import colors from "colors";
 import { promisify } from "util";
 
 
@@ -20,12 +20,14 @@ export const getContracts = (TARGET_PATH) => {
   return contracts;
 };
 
-export const getContractPath = (TARGET_PATH, contract_name) => {
+export const getContractPath = (TARGET_PATH, project_name, contract_name) => {
+  const fileName = `${project_name}_${contract_name}`
   const contracts = getContracts(TARGET_PATH);
-  const c = contracts.find((contract) => contract.includes(contract_name));
+  const c = contracts.find((contract) => contract.includes(fileName));
   if (!c) {
-    throw new Error(`Contract not found: ${contract_name}`);
+    throw new Error(`Contract not found: ${fileName}`);
   }
+  console.log(`\n\n\nContract is ${c}...\n\n`.blue);
   return path.join(TARGET_PATH, c);
 };
 
@@ -42,12 +44,6 @@ export const declare = async (filepath, contract_name) => {
   );
 
   const account = getAccount();
-  // console.log(
-  //   await account.estimateDeclareFee({
-  //     contract: compiledFile,
-  //     casm: compiledSierraCasmFile,
-  //   })
-  // );
   const contract = await account.declareIfNot({
     contract: compiledFile,
     casm: compiledSierraCasmFile,
@@ -144,7 +140,7 @@ export const writeDeploymentToFile = async (
 
 const readFileAsync = promisify(fs.readFile);
 
-export const getL2DeploymentAddress = async (contractName) => {
+export const getDeployedAddress = async (contractName) => {
   const folderPath = process.env.DEPLOYMENT_ADDRESSES_FOLDER;
   const fileName = path.join(folderPath, `${contractName}.json`);
 
@@ -166,23 +162,3 @@ export const getL2DeploymentAddress = async (contractName) => {
   }
 };
 
-export const getL1DeploymentAddress = async (contractName) => {
-  try {
-    const folderPath = process.env.DEPLOYMENT_ADDRESSES_FOLDER;
-    const fileName = path.join(folderPath, `${contractName}.json`);
-
-    const data = await readFileAsync(fileName, "utf8");
-    const jsonData = JSON.parse(data);
-
-    return jsonData["data"]["proxy_address"];
-  } catch (err) {
-    if (err.code === "ENOENT") {
-      console.error(`File not found: ${fileName}`);
-    } else if (err instanceof SyntaxError) {
-      console.error("Error parsing JSON:", err);
-    } else {
-      console.error("Error reading file:", err);
-    }
-    throw err; // Re-throw the error so the caller knows something went wrong
-  }
-};
