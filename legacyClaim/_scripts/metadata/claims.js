@@ -13,6 +13,26 @@ function decimalToHex(decimal) {
   return "0x" + decimal.toString(16).toUpperCase();
 }
 
+// Check for duplicate addresses
+function checkDuplicateAddresses(jsonData) {
+  const addresses = new Map();
+
+  for (const [key, value] of Object.entries(jsonData)) {
+    const address = value.address;
+    if (addresses.has(address)) {
+      throw new Error(
+        `Duplicate address found: ${address}. First occurrence at key ${addresses.get(
+          address
+        )}, duplicate at key ${key}`
+      );
+    } else {
+      addresses.set(address, key);
+    }
+  }
+
+  console.log("\n No duplicate addresses found.\n");
+}
+
 // Read the CSV file
 const claimsCSVFileContent = fs.readFileSync(claimsVSCFilePath, "utf-8");
 // Parse the CSV content
@@ -32,12 +52,17 @@ claimsRecords.forEach((record, index) => {
   };
 });
 
+
+// ensure no duplicate addresses
+checkDuplicateAddresses(claimsJson);
+
+
 // Convert the output object to a JSON string
 const claimsJsonOutput = JSON.stringify(claimsJson, null, 2);
 // Write the JSON to a file
 fs.writeFileSync(claimsJSONFilePath, claimsJsonOutput);
 
-console.log("\n\n Conversion complete from claims.csv to claims.json \n\n");
+console.log("\n Conversion complete from claims.csv to claims.json \n");
 
 
 /////////////////////////////////////////////////
@@ -71,4 +96,4 @@ fs.writeFile(cairoFilePath, generatedCairoFile, (err) => {
 });
 
 
-console.log("\n\n Conversion complete from claims.json to claims.cairo \n\n");
+console.log("\n Conversion complete from claims.json to claims.cairo \n");
