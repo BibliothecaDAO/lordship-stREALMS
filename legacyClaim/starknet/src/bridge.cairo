@@ -12,8 +12,6 @@ trait IBridge<T> {
 }
 
 
-
-
 #[starknet::contract]
 mod bridge {
     use core::starknet::SyscallResultTrait;
@@ -49,13 +47,9 @@ mod bridge {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState,
-        bridge_admin: ContractAddress,
-        l1_bridge_address: EthAddress,
-        reward_token: ContractAddress
+        ref self: ContractState, bridge_admin: ContractAddress, reward_token: ContractAddress
     ) {
         self.ownable.initializer(bridge_admin);
-        self.l1_bridge_address.write(l1_bridge_address);
         self.reward_token.write(reward_token);
     }
 
@@ -94,31 +88,28 @@ mod bridge {
         );
 
         // ensure the recipient's l1 and l2 addresses are non zero
-        assert(req.owner_l1.is_non_zero(), 'Bridge: zero l1 address');     
-        assert(req.owner_l2.is_non_zero(), 'Bridge: zero l2 address');     
+        assert(req.owner_l1.is_non_zero(), 'Bridge: zero l1 address');
+        assert(req.owner_l2.is_non_zero(), 'Bridge: zero l2 address');
 
         // ensure the rightful l1 owner called this function
-        let (claim_l1_owner, claim_amount ) = claims_mapping(req.claim_id.into());
+        let (claim_l1_owner, claim_amount) = claims_mapping(req.claim_id.into());
         assert!(req.owner_l1.into() == claim_l1_owner, "Bridge: l1 caller not reward owner");
 
         // ensure claim can't be done more than once
-        assert!(self.claimed.read(req.owner_l1) == false, "Bridge: l1 caller already claimed");        
+        assert!(self.claimed.read(req.owner_l1) == false, "Bridge: l1 caller already claimed");
         self.claimed.write(req.owner_l1, true);
 
         // transfer reward
         assert!(
-            ERC20ABIDispatcher{contract_address: self.reward_token.read()}
-            .transfer_from(self.reward_sponsor.read(), req.owner_l2, claim_amount.into()),
-                "Bridge: reward transfer failed"
+            ERC20ABIDispatcher { contract_address: self.reward_token.read() }
+                .transfer_from(self.reward_sponsor.read(), req.owner_l2, claim_amount.into()),
+            "Bridge: reward transfer failed"
         );
-
 
         self
             .emit(
                 ClaimRequestCompleted {
-                    l1_address: req.owner_l1,
-                    l2_address: req.owner_l2,
-                    amount: claim_amount.into()
+                    l1_address: req.owner_l1, l2_address: req.owner_l2, amount: claim_amount.into()
                 }
             );
     }
@@ -157,7 +148,7 @@ mod bridge {
         fn get_reward_token(self: @ContractState) -> ContractAddress {
             self.reward_token.read()
         }
-        
+
         fn get_reward_sponsor(self: @ContractState) -> ContractAddress {
             self.reward_sponsor.read()
         }

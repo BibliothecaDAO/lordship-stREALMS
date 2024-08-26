@@ -1,6 +1,6 @@
 fn claims_mapping(num: felt252) -> (felt252, felt252) {
     match num {
-        0 => panic!("zero claims"), 
+        0 => panic!("zero claims"),
         1 => (0, 0xDE0B6B3A7640000),
         2 => (0x8114e78965b7f7e52e35b2cfbe33973a4ef320cb, 0x55005F0C614480000),
         3 => (0x31331ec182777b3e3cf127f4709a8aaa8f76e549, 0x55005F0C614480000),
