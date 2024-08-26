@@ -21,20 +21,6 @@ contract BridgeState is Ownable {
     // Bridge L2 selector to deposit token from L1.
     felt252 _l2BridgeSelector;
 
-
-    /**
-       @notice Retrieves info about Bridge L2 mapping.
-
-       @return (realms L2 address, realms L2 selector).
-    */
-    function l2Info()
-        external
-        view
-        returns (snaddress, felt252)
-    {
-        return (_l2BridgeAddress, _l2BridgeSelector);
-    }
-
     /**
        @notice Sets Bridge L2 address.
 
