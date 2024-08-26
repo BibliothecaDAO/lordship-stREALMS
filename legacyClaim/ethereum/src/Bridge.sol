@@ -16,6 +16,7 @@ import "./IBridgeEvent.sol";
    @title Lords claim bridge contract.
 */
 contract Bridge is IBridgeEvent, UUPSOwnableProxied, BridgeState {
+    error ZeroAddressError();
 
     /**
        @notice Initializes the implementation, only callable once.
@@ -51,6 +52,10 @@ contract Bridge is IBridgeEvent, UUPSOwnableProxied, BridgeState {
     {
         if (!Cairo.isFelt252(snaddress.unwrap(ownerL2))) {
             revert CairoWrapError();
+        }
+
+        if (snaddress.unwrap(ownerL2) == 0x0) {
+            revert ZeroAddressError();
         }
 
         Request memory req;
