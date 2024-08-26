@@ -7,6 +7,7 @@ address constant HEVM_ADDRESS = address(bytes20(uint160(uint256(keccak256("hevm 
 
 struct Config {
     address ownerAddress;
+    address l1BridgeActualOwnerAddress;
     address l1TokenAddress;
     address deployerAddress;
     uint256 deployerPrivateKey;
@@ -27,6 +28,7 @@ library Utils {
         VmSafe vm = VmSafe(HEVM_ADDRESS);
         
         return Config({
+            l1BridgeActualOwnerAddress: vm.envAddress("BRIDGE_L1_ACTUAL_OWNER_ADDRESS"),
             ownerAddress: vm.envAddress("BRIDGE_L1_OWNER_ADDRESS"),
             l1TokenAddress: vm.envAddress("BRIDGE_L1_TOKEN_ADDRESS"),
             
