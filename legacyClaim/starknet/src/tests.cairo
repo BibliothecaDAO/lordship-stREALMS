@@ -1,4 +1,4 @@
 mod bridge_t;
 mod mocks {
-    mod mock_erc721;
+    mod mock_erc20;
 }
