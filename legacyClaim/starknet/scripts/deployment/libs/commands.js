@@ -26,7 +26,8 @@ export const deployl2Bridge = async () => {
   // deploy contract
   let L2_BRIDGE_ADMIN = BigInt(process.env.L2_BRIDGE_ADMIN);
   let L2_REWARD_TOKEN = BigInt(process.env.L2_REWARD_TOKEN);
-  let constructorCalldata = [L2_BRIDGE_ADMIN, L2_REWARD_TOKEN];
+  let L2_REWARD_SPONSOR = BigInt(process.env.L2_REWARD_SPONSOR);
+  let constructorCalldata = [L2_BRIDGE_ADMIN, L2_REWARD_TOKEN, L2_REWARD_SPONSOR];
   let address = await deploy(casualName, class_hash, constructorCalldata);
   return address;
 };
