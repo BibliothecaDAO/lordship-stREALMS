@@ -47,10 +47,14 @@ mod bridge {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, bridge_admin: ContractAddress, reward_token: ContractAddress
+        ref self: ContractState,
+        bridge_admin: ContractAddress,
+        reward_token: ContractAddress,
+        reward_sponsor: ContractAddress
     ) {
         self.ownable.initializer(bridge_admin);
         self.reward_token.write(reward_token);
+        self.reward_sponsor.write(reward_sponsor);
     }
 
 
