@@ -71,7 +71,7 @@ console.log("\n Conversion complete from claims.csv to claims.json \n");
 
 // Define paths to the input and output files
 const cairoFileName = "claims.cairo";
-const cairoFilePath = path.join(__dirname, "..","..", "starknet", "src", cairoFileName);
+const cairoFilePath = path.join(__dirname, "..","..", "..", "starknet", "src", cairoFileName);
 
 // Function to generate mapping function string for Cairo
 const generateMappingFunction = (mapping, name) => {
