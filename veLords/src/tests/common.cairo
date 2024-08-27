@@ -69,7 +69,7 @@ pub fn deploy_dlords() -> ContractAddress {
 
 pub fn deploy_velords() -> ContractAddress {
     let cls = declare("velords");
-    let calldata: Array<felt252> = array![velords_owner().into()];
+    let calldata: Array<felt252> = array![LORDS().into(), velords_owner().into()];
     cls.deploy(@calldata).expect('velords deploy failed')
 }
 
