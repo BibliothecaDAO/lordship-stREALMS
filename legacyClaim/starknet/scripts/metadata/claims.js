@@ -76,7 +76,7 @@ const cairoFilePath = path.join(__dirname, "..","..", "..", "starknet", "src", c
 // Function to generate mapping function string for Cairo
 const generateMappingFunction = (mapping, name) => {
   let functionString = `fn ${name}_mapping(num: felt252) -> (felt252, felt252) {\n    match num {\n`;
-  functionString += `        0 => panic!("zero ${name}"), \n`;
+  functionString += `        0 => panic!("zero ${name}"),\n`;
   for (const [key, value] of Object.entries(mapping)) {
     functionString += `        ${Number(key) + 1} => (${value.address}, ${value.amount}),\n`;
   }
