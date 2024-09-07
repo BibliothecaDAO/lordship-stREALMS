@@ -1,5 +1,5 @@
 import colors from "colors";
-import { deployRewardPool, deployVeLords, setRewardPoolInVeLords } from "./libs/deploy.js";
+import { deployRewardPool, deployVeLords, setFinalAdminInRewardPoolAndVeLords, setRewardPoolInVeLords } from "./libs/deploy.js";
 
 const main = async () => {
   console.log(`   ____          _         `.red);
@@ -12,6 +12,7 @@ const main = async () => {
   let veLordsAddress = await deployVeLords();
   let rewardPoolAddress = await deployRewardPool(veLordsAddress);
   await setRewardPoolInVeLords(veLordsAddress, rewardPoolAddress)
+  await setFinalAdminInRewardPoolAndVeLords(veLordsAddress, rewardPoolAddress)
 };
 
 main();

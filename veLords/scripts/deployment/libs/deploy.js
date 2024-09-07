@@ -105,3 +105,37 @@ export const setRewardPoolInVeLords = async (veLords, rewardPool) => {
 
   console.log("Successfully set reward pool in veLords".green, "\n\n");
 };
+
+
+export const setFinalAdminInRewardPoolAndVeLords = async (veLords, rewardPool) => {
+  ///////////////////////////////////////////////////////////
+  /////  Set Final Admin in Reward Pool and VeLords      ////
+  ///////////////////////////////////////////////////////////
+
+  const account = getAccount();
+  console.log(`\n Setting Final Admin in Reward Pool and VeLords ... \n\n`.green);
+  
+  let FINAL_ADMIN = BigInt(process.env.FINAL_ADMIN);
+  const contract = await account.execute([
+    {
+      contractAddress: veLords,
+      entrypoint: "transfer_ownership",
+      calldata: [FINAL_ADMIN],
+    },
+    {
+      contractAddress: rewardPool,
+      entrypoint: "transfer_ownership",
+      calldata: [FINAL_ADMIN],
+    }
+  ]);
+
+  // Wait for transaction
+  let network = getNetwork(process.env.STARKNET_NETWORK);
+  console.log(
+    "Tx hash: ".green,
+    `${network.explorer_url}/tx/${contract.transaction_hash})`
+  );
+  await account.waitForTransaction(contract.transaction_hash);
+
+  console.log(`Successfully set final admin in reward pool and veLords to ${FINAL_ADMIN}`.green, "\n\n");
+};
