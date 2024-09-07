@@ -1,0 +1,226 @@
+   Compiling lib(bridge) bridge v0.1.0 (/Users/credence/Desktop/StakedRealm/legacyClaim/starknet/Scarb.toml)
+   Compiling starknet-contract(bridge) bridge v0.1.0 (/Users/credence/Desktop/StakedRealm/legacyClaim/starknet/Scarb.toml)
+    Finished release target(s) in 18 seconds
+[31m   ____          _         [39m
+[31m  |    \ ___ ___| |___ _ _ [39m
+[31m  |  |  | -_| . | | . | | |[39m
+[31m  |____/|___|  _|_|___|_  |[39m
+[31m            |_|       |___|[39m
+[34m
+
+
+Contract is bridge_bridge.contract_class.json...
+
+[39m
+[35m
+Declaring l2_bridge...
+
+[39m
+[35m- Class Hash: [39m 0x51e7c88d68d1a4d3f1cc30c05ceadda0205f0cb25ffe1888e61e4ce1d5c51f3
+[35m- Tx Hash: [39m https://sepolia.voyager.online/tx/0x714ac128bdb105b065389a8a6e1ebe066ca223fd4ddbbb1c424f9140fb504a)
+[32m
+Deploying l2_bridge ... 
+
+[39m
+[32mTx hash: [39m https://sepolia.voyager.online/tx/0x341686bbdb6d8ea1b1b814fdb1c7706435e5e71f0a3875a6a03a7d67ed61049)
+[32mContract Address: [39m 0x48c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f3 
+
+
+"addresses/dev/l2_bridge.json" has been saved or overwritten
+No files changed, compilation skipped
+forge script --broadcast  --rpc-url https://sepolia.infura.io/v3/086b03d0842b4691b8a1c0861f3213d0 script/Bridge.s.sol:Deploy -vvvvvvvv
+No files changed, compilation skipped
+Traces:
+  [97] [32mDeploy[0m::[32msetUp[0m()[33m[0m
+    └─ [32m← [0m()
+
+  [1152464] [32mDeploy[0m::[32mrun[0m()[33m[0m
+    ├─ [0] [34mVM[0m::[34menvAddress[0m("BRIDGE_L1_OWNER_ADDRESS")[33m [staticcall][0m
+    │   └─ [34m← [0m<env var value>
+    ├─ [0] [34mVM[0m::[34menvAddress[0m("BRIDGE_L1_ACTUAL_OWNER_ADDRESS")[33m [staticcall][0m
+    │   └─ [34m← [0m<env var value>
+    ├─ [0] [34mVM[0m::[34menvAddress[0m("DEPLOYMENT_ACCOUNT_ADDRESS")[33m [staticcall][0m
+    │   └─ [34m← [0m<env var value>
+    ├─ [0] [34mVM[0m::[34menvUint[0m("DEPLOYMENT_ACCOUNT_PRIVATE_KEY")[33m [staticcall][0m
+    │   └─ [34m← [0m<env var value>
+    ├─ [0] [34mVM[0m::[34menvAddress[0m("STARKNET_CORE_L1_ADDRESS")[33m [staticcall][0m
+    │   └─ [34m← [0m<env var value>
+    ├─ [0] [34mVM[0m::[34menvUint[0m("BRIDGE_L2_SELECTOR")[33m [staticcall][0m
+    │   └─ [34m← [0m<env var value>
+    ├─ [0] [34mVM[0m::[34mstartBroadcast[0m(<pk>)[33m[0m
+    │   └─ [34m← [0m()
+    ├─ [0] [34mVM[0m::[34menvString[0m("LOCAL_LOGS")[33m [staticcall][0m
+    │   └─ [34m← [0m<env var value>
+    ├─ [0] [34mVM[0m::[34mreadFile[0m("logs/dev/l2_bridge.json")[33m [staticcall][0m
+    │   └─ [34m← [0m"{\n  \"address\": \"0x48c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f3\",\n  \"calldata\": [\n    \"0x272fb197b288ab6a441b80a60f60eef66ff7d5e9d8adc4f1d45fb3d9a0c4205\",\n    \"0x19c92fa87f4d5e3be25c3dd6a284f30282a07e87cd782f5fd387b82c8142017\",\n    \"0x272fb197b288ab6a441b80a60f60eef66ff7d5e9d8adc4f1d45fb3d9a0c4205\"\n  ],\n  \"deployed_at\": 1724717974135,\n  \"deployed_at_readable\": \"Tue, 27 Aug 2024 00:19:34 GMT\"\n}"
+    ├─ [0] [34mVM[0m::[34mparseJson[0m("{\n  \"address\": \"0x48c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f3\",\n  \"calldata\": [\n    \"0x272fb197b288ab6a441b80a60f60eef66ff7d5e9d8adc4f1d45fb3d9a0c4205\",\n    \"0x19c92fa87f4d5e3be25c3dd6a284f30282a07e87cd782f5fd387b82c8142017\",\n    \"0x272fb197b288ab6a441b80a60f60eef66ff7d5e9d8adc4f1d45fb3d9a0c4205\"\n  ],\n  \"deployed_at\": 1724717974135,\n  \"deployed_at_readable\": \"Tue, 27 Aug 2024 00:19:34 GMT\"\n}", ".address")[33m [staticcall][0m
+    │   └─ [34m← [0m0x048c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f3
+    ├─ [878113] [33m→ [0m[33mnew[0m Bridge@0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740
+    │   ├─ emit [36mOwnershipTransferred[0m(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: 0x8d0903167DF89824b9c9ee540506850D689Fe736)
+    │   └─ [32m← [0m4267 bytes of code
+    ├─ [174095] [33m→ [0m[33mnew[0m ERC1967Proxy@0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA
+    │   ├─ emit [36mUpgraded[0m(implementation: Bridge: [0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740])
+    │   ├─ [114041] [32mBridge[0m::[32minitialize[0m(0x0000000000000000000000008d0903167df89824b9c9ee540506850d689fe736000000000000000000000000e2bb56ee936fd6433dc0f6e7e3b8365c906aa057048c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f303593216f3a8b22f4cf375e5486e3d13bfde9d0f26976d20ac6f653c73f7e507)[33m [delegatecall][0m
+    │   │   ├─ emit [36mOwnershipTransferred[0m(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: 0x8d0903167DF89824b9c9ee540506850D689Fe736)
+    │   │   └─ [32m← [0m()
+    │   └─ [32m← [0m170 bytes of code
+    ├─ [2411] [32mBridge[0m::[32mtransferOwnership[0m(0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)[33m[0m
+    │   ├─ emit [36mOwnershipTransferred[0m(previousOwner: 0x8d0903167DF89824b9c9ee540506850D689Fe736, newOwner: 0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)
+    │   └─ [32m← [0m()
+    ├─ [2800] [32mERC1967Proxy[0m::[32mtransferOwnership[0m(0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)[33m[0m
+    │   ├─ [2411] [32mBridge[0m::[32mtransferOwnership[0m(0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)[33m [delegatecall][0m
+    │   │   ├─ emit [36mOwnershipTransferred[0m(previousOwner: 0x8d0903167DF89824b9c9ee540506850D689Fe736, newOwner: 0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)
+    │   │   └─ [32m← [0m()
+    │   └─ [32m← [0m()
+    ├─ [0] [34mVM[0m::[34mstopBroadcast[0m()[33m[0m
+    │   └─ [34m← [0m()
+    ├─ [0] [34mVM[0m::[34mtoString[0m(ERC1967Proxy: [0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA])[33m [staticcall][0m
+    │   └─ [34m← [0m"0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA"
+    ├─ [0] [34mVM[0m::[34mserializeString[0m("l1_bridge", "proxy_address", "0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA")[33m[0m
+    │   └─ [34m← [0m"{\"proxy_address\":\"0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA\"}"
+    ├─ [0] [34mVM[0m::[34mtoString[0m(Bridge: [0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740])[33m [staticcall][0m
+    │   └─ [34m← [0m"0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740"
+    ├─ [0] [34mVM[0m::[34mserializeString[0m("l1_bridge", "impl_address", "0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740")[33m[0m
+    │   └─ [34m← [0m"{\"impl_address\":\"0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740\",\"proxy_address\":\"0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA\"}"
+    ├─ [0] [34mVM[0m::[34mtoString[0m(0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057)[33m [staticcall][0m
+    │   └─ [34m← [0m"0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057"
+    ├─ [0] [34mVM[0m::[34mserializeString[0m("l1_bridge", "sncore_address", "0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057")[33m[0m
+    │   └─ [34m← [0m"{\"impl_address\":\"0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740\",\"proxy_address\":\"0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA\",\"sncore_address\":\"0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057\"}"
+    ├─ [0] [34mVM[0m::[34mserializeBool[0m("l1_bridge", "success", true)[33m[0m
+    │   └─ [34m← [0m"{\"impl_address\":\"0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740\",\"proxy_address\":\"0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA\",\"sncore_address\":\"0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057\",\"success\":true}"
+    ├─ [0] [34mVM[0m::[34mserializeString[0m("out", "data", "{\"impl_address\":\"0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740\",\"proxy_address\":\"0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA\",\"sncore_address\":\"0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057\",\"success\":true}")[33m[0m
+    │   └─ [34m← [0m"{\"data\":{\"impl_address\":\"0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740\",\"proxy_address\":\"0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA\",\"sncore_address\":\"0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057\",\"success\":true}}"
+    ├─ [0] [34mVM[0m::[34menvString[0m("LOCAL_LOGS")[33m [staticcall][0m
+    │   └─ [34m← [0m<env var value>
+    ├─ [0] [34mVM[0m::[34mcreateDir[0m("logs/dev/", true)[33m[0m
+    │   └─ [34m← [0m()
+    ├─ [0] [34mVM[0m::[34mwriteJson[0m("{\"data\":{\"impl_address\":\"0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740\",\"proxy_address\":\"0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA\",\"sncore_address\":\"0xE2Bb56ee936fd6433DC0F6e7e3b8365C906AA057\",\"success\":true}}", "logs/dev/l1_bridge.json")[33m[0m
+    │   └─ [34m← [0m()
+    └─ [32m← [0m()
+
+
+[32mScript ran successfully.[0m
+
+## Setting up 1 EVM.
+==========================
+Simulated On-chain Traces:
+
+  [878113] [33m→ [0m[33mnew[0m Bridge@0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740
+    ├─ emit [36mOwnershipTransferred[0m(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: 0x8d0903167DF89824b9c9ee540506850D689Fe736)
+    └─ [32m← [0m4267 bytes of code
+
+  [176595] [33m→ [0m[33mnew[0m ERC1967Proxy@0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA
+    ├─ emit [36mUpgraded[0m(implementation: Bridge: [0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740])
+    ├─ [114041] [32mBridge[0m::[32minitialize[0m(0x0000000000000000000000008d0903167df89824b9c9ee540506850d689fe736000000000000000000000000e2bb56ee936fd6433dc0f6e7e3b8365c906aa057048c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f303593216f3a8b22f4cf375e5486e3d13bfde9d0f26976d20ac6f653c73f7e507)[33m [delegatecall][0m
+    │   ├─ emit [36mOwnershipTransferred[0m(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: 0x8d0903167DF89824b9c9ee540506850D689Fe736)
+    │   └─ [32m← [0m()
+    └─ [32m← [0m170 bytes of code
+
+  [7211] [32mBridge[0m::[32mtransferOwnership[0m(0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)[33m[0m
+    ├─ emit [36mOwnershipTransferred[0m(previousOwner: 0x8d0903167DF89824b9c9ee540506850D689Fe736, newOwner: 0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)
+    └─ [32m← [0m()
+
+  [12100] [32mERC1967Proxy[0m::[32mtransferOwnership[0m(0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)[33m[0m
+    ├─ [7211] [32mBridge[0m::[32mtransferOwnership[0m(0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)[33m [delegatecall][0m
+    │   ├─ emit [36mOwnershipTransferred[0m(previousOwner: 0x8d0903167DF89824b9c9ee540506850D689Fe736, newOwner: 0xBbae2e00bcc495913546Dfaf0997Fb18BF0F20fe)
+    │   └─ [32m← [0m()
+    └─ [32m← [0m()
+
+
+==========================
+
+Chain 11155111
+
+Estimated gas price: 3.415206474 gwei
+
+Estimated total gas used for script: 1712966
+
+Estimated amount required: 0.005850132572941884 ETH
+
+==========================
+
+###
+Finding wallets for all the necessary addresses...
+##
+Sending transactions [0 - 3].
+
+Transactions saved to: /Users/credence/Desktop/StakedRealm/legacyClaim/ethereum/broadcast/Bridge.s.sol/11155111/run-latest.json
+
+Sensitive values saved to: /Users/credence/Desktop/StakedRealm/legacyClaim/ethereum/cache/Bridge.s.sol/11155111/run-latest.json
+
+##
+Waiting for receipts.
+
+##### sepolia
+✅  [Success]Hash: 0x7e2a7edc20c67ea306f9df4ec6e58d17ae7b817696a9dde6df7dfbc8db274235
+Contract Address: 0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740
+Block: 6578003
+Paid: 0.003198284577072192 ETH (999771 gas * 3.199017152 gwei)
+
+
+##### sepolia
+✅  [Success]Hash: 0x5c700cdee71e28b795819130577adef5716db322e62208703427a503a45b5156
+Contract Address: 0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA
+Block: 6578003
+Paid: 0.000805707658919872 ETH (251861 gas * 3.199017152 gwei)
+
+
+##### sepolia
+✅  [Success]Hash: 0xe799c0f7667aa85630a1e2dbb2f4ac7059dbfdcae421f7f872fbba41b45f6c9f
+Block: 6578003
+Paid: 0.000091591060078912 ETH (28631 gas * 3.199017152 gwei)
+
+
+##### sepolia
+✅  [Success]Hash: 0x6e9b25d0cdec2a7cbb267f11e998c93ae8b9e6eea4d92f2789fa21aa958b2796
+Block: 6578003
+Paid: 0.00010723105493504 ETH (33520 gas * 3.199017152 gwei)
+
+
+Transactions saved to: /Users/credence/Desktop/StakedRealm/legacyClaim/ethereum/broadcast/Bridge.s.sol/11155111/run-latest.json
+
+Sensitive values saved to: /Users/credence/Desktop/StakedRealm/legacyClaim/ethereum/cache/Bridge.s.sol/11155111/run-latest.json
+
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+Total Paid: 0.004202814351006016 ETH (1313783 gas * avg 3.199017152 gwei)
+
+Transactions saved to: /Users/credence/Desktop/StakedRealm/legacyClaim/ethereum/broadcast/Bridge.s.sol/11155111/run-latest.json
+
+Sensitive values saved to: /Users/credence/Desktop/StakedRealm/legacyClaim/ethereum/cache/Bridge.s.sol/11155111/run-latest.json
+
+[31m   ____      _ _ [39m
+[31m  / ___|__ _| | |[39m
+[31m | |   / _` | | |[39m
+[31m | |__| (_| | | |[39m
+[31m  \____\__,_|_|_|[39m
+
+
+{
+  l1_bridge: '0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA',
+  l2_bridge: '0x48c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f3'
+}
+
+
+[32m
+ Setting L1 Bridge Address ... 
+
+[39m
+[32mTx hash: [39m https://sepolia.voyager.online/tx/0x1071ee6bb8653656ba491ab65c7d0886734ee423a1fbfdd0f6563591aa6ac8f)
+[32mSuccessfully set L1 Bridge Address to 0x5C209C96733BA71Fb09772D22d12Fc6f8CB980cA in L2 Bridge 0x48c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f3[39m 
+
+
+[32m
+ Setting New Owner Address ... 
+
+[39m
+[32mTx hash: [39m https://sepolia.voyager.online/tx/0x51272864019e9ba12e063ee062238f8e82cace40d07308a83e1c4e502c95eba)
+[32mSuccessfully set New Owner Address to 0x272fb197b288ab6a441b80a60f60eef66ff7d5e9d8adc4f1d45fb3d9a0c4205 in L2 Bridge 0x48c774a0f71120aeffcb520fa4a08e1659c17abb46a792ea1e1bbbcf5ef38f3[39m 
+
+
+Start verifying contract `0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740` deployed on sepolia
+
+Submitting verification for [src/Bridge.sol:Bridge] 0x992dc11c8Fd509a77924Ed5BB9C295794fc5A740.
