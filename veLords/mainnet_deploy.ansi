@@ -1,0 +1,65 @@
+   Compiling lordship v0.1.0 (/Users/credence/Desktop/StakedRealm/veLords/Scarb.toml)
+    Finished release target(s) in 9 seconds
+/Users/credence/Desktop/StakedRealm/velords/scripts/deployment
+   ____          _         
+  |    \ ___ ___| |___ _ _ 
+  |  |  | -_| . | | . | | |
+  |____/|___|  _|_|___|_  |
+            |_|       |___|
+
+
+
+Contract is lordship_velords.contract_class.json...
+
+
+
+Declaring Lordship veLords...
+
+
+- Class Hash:  0x1cb93e4706c368e69d996310ab93142f55f8b01b6156d4158099194bd05857c
+- Tx Hash:  https://voyager.online/tx/0x968e19dc6f87a76624116dd6cace3980dd72e41aa1e567c5dbeb6f982df7fd)
+
+Deploying Lordship veLords ... 
+
+
+Tx hash:  https://voyager.online/tx/0x4750c4b96e26ca3c8a9128625cf3f667754c62bb65e8dc4615d7acd99d0539e)
+Contract Address:  0x47230028629128ac5bfbb384d32f925e70e329b624fc5d82e9c60f5746795cd 
+
+
+"addresses/prod/Lordship veLords.json" has been saved or overwritten
+
+
+
+Contract is lordship_reward_pool.contract_class.json...
+
+
+
+Declaring Lordship veLords Reward Pool...
+
+
+- Class Hash:  0x1f87f12c76e338482d4afd0d8618decc288a318f7fe6e617e522e42895a6bcc
+- Tx Hash:  https://voyager.online/tx/0x7944416caf677795ef4c99e5f31ce4a9c86366976de7e1922bb19923eb03dc5)
+
+Deploying Lordship veLords Reward Pool ... 
+
+
+Tx hash:  https://voyager.online/tx/0x635091b867e9782e6cc3f66497716c7a467e0e56529d94f6eb41c5f3f6f60aa)
+Contract Address:  0x91b13b83e5c34112aa066a844d4cbe6af99b3d134293829ca1730ea4869a71 
+
+
+"addresses/prod/Lordship veLords Reward Pool.json" has been saved or overwritten
+
+ Setting Reward Pool ... 
+
+
+Tx hash:  https://voyager.online/tx/0x10aa65c66091948f5a7b293aab1f289bf38dc8ffeacdef8f06db8334bd7d29d)
+Successfully set reward pool in veLords 
+
+
+
+ Setting Final Admin in Reward Pool and VeLords ... 
+
+
+Tx hash:  https://voyager.online/tx/0x754446832ba669d6d32dd8d0d3dc2f2657206440606bc1fa84aa91a86605a94)
+Successfully set final admin in reward pool and veLords to 270623063481960266090259869745487843733262104959603938883672164036750381395 
+
