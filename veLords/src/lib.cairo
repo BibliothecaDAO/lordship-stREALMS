@@ -1,8 +1,10 @@
+mod burner;
 mod dlords;
 mod reward_pool;
 mod velords;
 
 pub mod interfaces {
+    pub mod IBurner;
     pub mod IERC20;
     pub mod IRewardPool;
     pub mod IVE;
