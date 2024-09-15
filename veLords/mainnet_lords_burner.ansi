@@ -1,0 +1,26 @@
+[31m   ____          _         [39m
+[31m  |    \ ___ ___| |___ _ _ [39m
+[31m  |  |  | -_| . | | . | | |[39m
+[31m  |____/|___|  _|_|___|_  |[39m
+[31m            |_|       |___|[39m
+[34m
+
+
+Contract is lordship_burner.contract_class.json...
+
+[39m
+[35m
+Declaring Lordship Lords Burner...
+
+[39m
+[35m- Class Hash: [39m 0x1fee7f8d94aab37b94bcf07b35a556d3039cbe72ba36109216b52d6cc07251b
+[35m- Tx Hash: [39m Already declared
+[32m
+Deploying Lordship Lords Burner ... 
+
+[39m
+[32mTx hash: [39m https://voyager.online/tx/0x302d79c2523f13d9796d14ae9e6ddc59da8ddd323a243af6770325bb1512dd5)
+[32mContract Address: [39m 0x45c587318c9ebcf2fbe21febf288ee2e3597a21cd48676005a5770a50d433c5 
+
+
+"addresses/prod/Lordship Lords Burner.json" has been saved or overwritten

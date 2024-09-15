@@ -78,6 +78,28 @@ export const deployRewardPool = async (veLordsAddress) => {
   return address
 };
 
+export const deployLordsBurner = async (rewardPoolAddress) => {
+  ///////////////////////////////////////////
+  ////////       Lords Burner     ///////////
+  ///////////////////////////////////////////
+
+  // declare contract
+  let realName = "Lordship Lords Burner";
+  let contractName = "lordship_burner";
+  const class_hash = (
+    await declare(getContractPath(TARGET_PATH, contractName), realName)
+  ).class_hash;
+
+  // deploy contract
+  let LORDS_BURNER_ADMIN = BigInt(process.env.FINAL_ADMIN);
+  let LORDS_BURNER_REWARD_POOL = rewardPoolAddress;
+  let constructorCalldata = [
+    LORDS_BURNER_ADMIN,
+    LORDS_BURNER_REWARD_POOL,
+  ];
+  let address = await deploy(realName, class_hash, constructorCalldata);
+  return address;
+};
 
 export const setRewardPoolInVeLords = async (veLords, rewardPool) => {
   ///////////////////////////////////////////
