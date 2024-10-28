@@ -236,6 +236,8 @@ mod StRealm {
             strealm_component._update_stream_balance(owner_after_transfer);
 
             // transfer voting units 
+            // note: we call transfer_voting_units here because the owner_before_transfer
+            //       can not be retrieved from inside the after_update hook
             let mut erc721_votes_component = get_dep_component_mut!(ref self, ERC721Votes);
             erc721_votes_component.transfer_voting_units(owner_before_transfer, to, 1);
         }

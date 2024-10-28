@@ -6,6 +6,13 @@ use starknet::ContractAddress;
 
 /// # ERC721Votes Component
 ///
+/// This contract is an exact copy of OpenZeppelin's ERC20Votes component, in version v0.13.0. (https://github.com/OpenZeppelin/cairo-contracts/blob/978b4e75209da355667d8954d2450e32bd71fe49/src/token/erc20/extensions/erc20_votes.cairo)
+/// Except:
+///     - every occurence of ERC20 has been replaced with ERC721
+///     - the unused internal `num_checkpoints` and `checkpoints` functions were removed
+///     - Hooks were added to allow for custom logic to be executed before and after delegations
+///     
+/// 
 /// The ERC721Votes component tracks voting units from ERC721 balances, which are a measure of voting power that can be
 /// transferred, and provides a system of vote delegation, where an account can delegate its voting units to a sort of
 /// "representative" that will pool delegated voting units from different accounts and can then use it to vote in
