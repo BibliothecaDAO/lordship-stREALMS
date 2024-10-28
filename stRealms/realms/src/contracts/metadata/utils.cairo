@@ -37,12 +37,17 @@ fn make_json_and_base64_encode_metadata(
     let attributes: u256 = name_and_attrs_only & attrs_mask;
 
     let mut attrs_arr: Span<u8> = encoded_attributes_to_array(attributes);
+    // pop front
     let region = attrs_arr.pop_front().unwrap();
     let cities = attrs_arr.pop_front().unwrap();
     let harbors = attrs_arr.pop_front().unwrap();
     let rivers = attrs_arr.pop_front().unwrap();
+    // pop back
     let wonder = attrs_arr.pop_back().unwrap();
     let order = attrs_arr.pop_back().unwrap();
+
+    // note: after all pop_front and pop_back, 
+    //       what's left are the resources
 
     let mut attrs: Array<ByteArray> = array![];
     attrs
