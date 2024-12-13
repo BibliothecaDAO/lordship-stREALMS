@@ -5,12 +5,15 @@
 
 #[starknet::contract]
 mod burner {
-    use lordship::interfaces::IBurner::IBurner;
+    use lordship::interfaces::IBurner::{IBurner, IBurnerAdmin};
     use lordship::interfaces::IERC20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use lordship::interfaces::IRewardPool::{IRewardPoolDispatcher, IRewardPoolDispatcherTrait};
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::account::utils::execute_calls;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
+    use starknet::account::Call;
+
     use starknet::{ClassHash, ContractAddress, get_contract_address, contract_address_const};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -74,6 +77,14 @@ mod burner {
             let reward_pool = self.reward_pool.read();
             lords_token.approve(reward_pool.contract_address, lords_balance);
             reward_pool.burn(lords_balance);
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl IBurnerAdminImpl of IBurnerAdmin<ContractState> {
+        fn execute_calls(ref self: ContractState, mut calls: Array<Call>) -> Array<Span<felt252>> {
+            self.ownable.assert_only_owner();
+            execute_calls(calls)
         }
     }
 }
