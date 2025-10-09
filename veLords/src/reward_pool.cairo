@@ -237,7 +237,7 @@ mod reward_pool {
             let mut t: u64 = self.last_token_time.read();
             let since_last: u64 = now - t;
             self.last_token_time.write(now);
-            let mut this_week: u64 = floor_to_week(now);
+            let mut this_week: u64 = floor_to_week(t);
             let mut next_week: u64 = 0;
             let mut i: u32 = 0;
 
