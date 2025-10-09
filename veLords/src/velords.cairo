@@ -591,6 +591,12 @@ mod velords {
 
         fn replay_slope_changes(self: @ContractState, owner: ContractAddress, point: @Point, ts: u64) -> Point {
             let mut upoint: Point = *point;
+
+            // early exit
+            if upoint.slope.is_zero() {
+                return upoint;
+            }
+
             let mut t_i: u64 = floor_to_week(upoint.ts);
 
             let mut i = 0;
