@@ -195,6 +195,9 @@ mod reward_pool {
         /// this function emits, if the `claim_epoch` is less than `max_epoch`, the address
         /// may claim again.
         fn claim(ref self: ContractState, recipient: ContractAddress) -> u256 {
+            assert!(recipient != 0.try_into().unwrap(), "Zero address recipient");
+            assert!(recipient != self.velords.read().contract_address, "velords address recipient");
+
             let now: u64 = get_block_timestamp();
 
             if now >= self.time_cursor.read() {
