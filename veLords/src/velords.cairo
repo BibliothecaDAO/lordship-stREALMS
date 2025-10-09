@@ -315,7 +315,7 @@ mod velords {
                 }
             } else {
                 if point.block != current_block {
-                    dt = (height - point.block) * (current_block - point.ts) / (current_block - point.block);
+                    dt = (height - point.block) * (get_block_timestamp() - point.ts) / (current_block - point.block);
                 }
             }
 
