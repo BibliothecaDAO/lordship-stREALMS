@@ -334,10 +334,10 @@ mod reward_pool {
                     break;
                 }
                 let balance_of: u256 = self.velords.read().balance_of_at(recipient, week_cursor);
-                if balance_of.is_zero() {
-                    break;
+                let ve_supply = self.ve_supply.read(week_cursor);
+                if ve_supply.is_non_zero() && balance_of.is_non_zero() {
+                    to_distribute += balance_of * self.tokens_per_week.read(week_cursor) / ve_supply;
                 }
-                to_distribute += balance_of * self.tokens_per_week.read(week_cursor) / self.ve_supply.read(week_cursor);
                 week_cursor += WEEK;
                 i += 1;
             };
