@@ -330,6 +330,9 @@ mod velords {
         /// Max lock time is 4 years. Lock duration and amount can only be increased.
         fn manage_lock(ref self: ContractState, amount: u256, unlock_time: u64, owner: ContractAddress) {
             let amount: u128 = amount.try_into().expect('amount overflow');
+            assert!(owner != 0.try_into().unwrap(), "owner cant be zero address");
+            assert!(owner != get_contract_address(), "owner cant be this contract address");
+
             let old_lock: Lock = self.locked.read(owner);
             let mut new_lock: Lock = old_lock;
             new_lock.amount += amount;
