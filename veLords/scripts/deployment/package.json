@@ -5,14 +5,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "deploy": "node deploy"
+    "deploy": "node deploy",
+    "declare": "node declare"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "colors": "^1.4.0",
     "dotenv": "^16.3.1",
-    "starknet": "^6.8.0"
+    "starknet": "^8.5.2"
   },
   "devDependencies": {
     "prettier": "3.1.1"

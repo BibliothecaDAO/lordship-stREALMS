@@ -195,6 +195,9 @@ mod reward_pool {
         /// this function emits, if the `claim_epoch` is less than `max_epoch`, the address
         /// may claim again.
         fn claim(ref self: ContractState, recipient: ContractAddress) -> u256 {
+            assert!(recipient != 0.try_into().unwrap(), "Zero address recipient");
+            assert!(recipient != self.velords.read().contract_address, "velords address recipient");
+
             let now: u64 = get_block_timestamp();
 
             if now >= self.time_cursor.read() {
@@ -234,7 +237,7 @@ mod reward_pool {
             let mut t: u64 = self.last_token_time.read();
             let since_last: u64 = now - t;
             self.last_token_time.write(now);
-            let mut this_week: u64 = floor_to_week(now);
+            let mut this_week: u64 = floor_to_week(t);
             let mut next_week: u64 = 0;
             let mut i: u32 = 0;
 
@@ -331,10 +334,10 @@ mod reward_pool {
                     break;
                 }
                 let balance_of: u256 = self.velords.read().balance_of_at(recipient, week_cursor);
-                if balance_of.is_zero() {
-                    break;
+                let ve_supply = self.ve_supply.read(week_cursor);
+                if ve_supply.is_non_zero() && balance_of.is_non_zero() {
+                    to_distribute += balance_of * self.tokens_per_week.read(week_cursor) / ve_supply;
                 }
-                to_distribute += balance_of * self.tokens_per_week.read(week_cursor) / self.ve_supply.read(week_cursor);
                 week_cursor += WEEK;
                 i += 1;
             };

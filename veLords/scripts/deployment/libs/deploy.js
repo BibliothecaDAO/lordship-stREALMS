@@ -10,6 +10,33 @@ const TARGET_PATH = path.join(__dirname, "..", "..", "..", "target", "release");
 
 
 
+export const declareVeLords = async () => {
+  ///////////////////////////////////////////
+  ////////    VeLords           /////////////
+  ///////////////////////////////////////////
+
+  // declare contract
+  let realName = "Lordship veLords";
+  let contractName = "lordship_velords";
+  const class_hash = (
+    await declare(getContractPath(TARGET_PATH, contractName), realName)
+  ).class_hash;
+};
+
+
+export const declareRewardPool = async () => {
+  ///////////////////////////////////////////
+  ////////       Reward Pool    /////////////
+  ///////////////////////////////////////////
+
+  // declare contract
+  let realName = "Lordship Reward Pool";
+  let contractName = "lordship_reward_pool";
+  const class_hash = (
+    await declare(getContractPath(TARGET_PATH, contractName), realName)
+  ).class_hash;
+};
+
 export const deployVeLords = async () => {
   ///////////////////////////////////////////
   ////////    VeLords           /////////////
