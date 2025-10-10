@@ -176,3 +176,73 @@ fn test_flow_issue() {
     start_warp(CheatTarget::All, now);
     let _reward = reward_pool.claim(blobert);
 }
+
+
+#[test]
+#[should_panic(expected: ("Zero address recipient",))]
+fn test_claim_zero_address_recipient() {
+    let (velords, lords) = common::velords_setup();
+    let reward_pool = IRewardPoolDispatcher { contract_address: velords.get_reward_pool() };
+    let blobert: ContractAddress = common::blobert();
+    common::setup_for_blobert(lords.contract_address, velords.contract_address);
+
+    let lock_amount: u256 = 2_000_000 * common::ONE;
+    let deployment_ts = get_block_timestamp();
+    let unlock_time: u64 = deployment_ts + 4 * common::YEAR;
+
+    // blobert locks 2M LORDS for 4 years
+    start_prank(CheatTarget::One(velords.contract_address), blobert);
+    velords.manage_lock(lock_amount, unlock_time, blobert);
+
+    // simulate rewards going to the reward pool
+    let this = get_contract_address();
+    start_prank(CheatTarget::All, this);
+    let rewards: u256 = 500_000 * common::ONE;
+    common::fund_lords(this, Option::Some(rewards));
+    lords.approve(reward_pool.contract_address, rewards);
+
+    start_warp(CheatTarget::All, deployment_ts + common::DAY * 30);
+    velords.checkpoint();
+    reward_pool.checkpoint_total_supply();
+    reward_pool.burn(rewards);
+
+    start_warp(CheatTarget::All, deployment_ts + common::DAY * 60);
+
+    // attempt to claim with zero address as recipient (should panic)
+    let zero_address: ContractAddress = 0.try_into().unwrap();
+    reward_pool.claim(zero_address);
+}
+
+#[test]
+#[should_panic(expected: ("velords address recipient",))]
+fn test_claim_velords_address_recipient() {
+    let (velords, lords) = common::velords_setup();
+    let reward_pool = IRewardPoolDispatcher { contract_address: velords.get_reward_pool() };
+    let blobert: ContractAddress = common::blobert();
+    common::setup_for_blobert(lords.contract_address, velords.contract_address);
+
+    let lock_amount: u256 = 2_000_000 * common::ONE;
+    let deployment_ts = get_block_timestamp();
+    let unlock_time: u64 = deployment_ts + 4 * common::YEAR;
+
+    // blobert locks 2M LORDS for 4 years
+    start_prank(CheatTarget::One(velords.contract_address), blobert);
+    velords.manage_lock(lock_amount, unlock_time, blobert);
+
+    // simulate rewards going to the reward pool
+    let this = get_contract_address();
+    start_prank(CheatTarget::All, this);
+    let rewards: u256 = 500_000 * common::ONE;
+    common::fund_lords(this, Option::Some(rewards));
+    lords.approve(reward_pool.contract_address, rewards);
+
+    start_warp(CheatTarget::All, deployment_ts + common::DAY * 30);
+    velords.checkpoint();
+    reward_pool.checkpoint_total_supply();
+    reward_pool.burn(rewards);
+
+    start_warp(CheatTarget::All, deployment_ts + common::DAY * 60);
+
+    // attempt to claim with velords contract address as recipient (should panic)
+    reward_pool.claim(velords.contract_address);
+}
