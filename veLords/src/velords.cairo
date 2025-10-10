@@ -328,6 +328,12 @@ mod velords {
         /// Create or modify a lock.
         /// Supports deposits on behalf of an address.
         /// Max lock time is 4 years. Lock duration and amount can only be increased.
+        /// 
+        /// @note if you lock an amount less than max lock duration you will get
+        /// 0 additional slope
+        /// 
+        /// @note you can extend lock by depositing 0 amount
+        /// 
         fn manage_lock(ref self: ContractState, amount: u256, unlock_time: u64, owner: ContractAddress) {
             let amount: u128 = amount.try_into().expect('amount overflow');
             assert!(owner != 0.try_into().unwrap(), "owner cant be zero address");
@@ -451,6 +457,9 @@ mod velords {
             min
         }
 
+
+        // @note this finds the latest epoch before or at exactly that timestamp.
+        // if there are multiple at that timestamp, it returns the latest one
         fn find_epoch_by_timestamp_internal(
             self: @ContractState, owner: ContractAddress, ts: u64, max_epoch: u64
         ) -> u64 {
@@ -592,6 +601,8 @@ mod velords {
             point
         }
 
+        // @note there is an assumption here that `point` is the closest point to ts
+        // @note returned upoint.ts should not be used because it will be wrong
         fn replay_slope_changes(self: @ContractState, owner: ContractAddress, point: @Point, ts: u64) -> Point {
             let mut upoint: Point = *point;
 
